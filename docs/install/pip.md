@@ -1,37 +1,38 @@
-### Available packages
+# 通过 pip 安装 TensorFlow
 
-*   `tensorflow` —Current release for CPU-only _(recommended for beginners)_
-*   `tensorflow-gpu` —Current release with [GPU support](/docs/tensorflow/install/gpu) _(Ubuntu and Windows)_
-*   `tf-nightly` —Nightly build for CPU-only _(unstable)_
-*   `tf-nightly-gpu` —Nightly build with [GPU support](/docs/tensorflow/install/gpu) _(unstable, Ubuntu and Windows)_
+### 可用的安装包
 
-### System requirements
+*   `tensorflow` — 仅支持 CPU 的当前发布版本 _(推荐初学者使用)_
+*   `tensorflow-gpu` — [支持 GPU](/docs/tensorflow/install/gpu) 的当前版本 _(Ubuntu and Windows)_
+*   `tf-nightly` — 仅支持 CPU 的快速迭代版本 _(不稳定)_
+*   `tf-nightly-gpu` — [支持 GPU](/docs/tensorflow/install/gpu) 的快速迭代版本 _(不稳定, Ubuntu 和 Windows)_
 
-*   Ubuntu 16.04 or later (64-bit)
-*   macOS 10.12.6 (Sierra) or later (64-bit) _(no GPU support)_
-*   Windows 7 or later (64-bit) _(Python 3 only)_
-*   Raspbian 9.0 or later
+### 系统要求
 
-### Hardware requirements
+*   Ubuntu 16.04 及以上 (64 位)
+*   macOS 10.12.6 (Sierra) 及以上 (64-bit) _(无 GPU 支持)_
+*   Windows 7 及以上 (64 位) _(仅 Python 3)_
+*   Raspbian 9.0 及以上
 
-*   Starting with TensorFlow 1.6, binaries use [AVX instructions](https://en.wikipedia.org/wiki/Advanced_Vector_Extensions#CPUs_with_AVX) which may not run on older CPUs.
-*   Read the [GPU support guide](/docs/tensorflow/install/gpu) to set up a CUDA®-enabled GPU card on Ubuntu or Windows.
+### 硬件要求
 
-1\. Install the Python development environment on your system
+*   TensorFlow 从 1.6 版本开始, TensorFlow 执行文件使用 [AVX 指令集](https://en.wikipedia.org/wiki/Advanced_Vector_Extensions#CPUs_with_AVX)，可能会在一些老式的 CPU 里运行不了。
+*   如果要在 Ubuntu 或者 Windows 中使用 GPU 显卡加速，请参阅 [GPU 指南](/docs/tensorflow/install/gpu)。
+
+1\. 安装 Python
 -------------------------------------------------------------
 
-Check if your Python environment is already configured:
+检查 Python 环境是否配置正确：
 
 Python2
 
     python --version
 
-Python3(Requires Python 3.4, 3.5, or 3.6)
+Python3(要求 Python 3.4, 3.5, or 3.6)
 
     python3 --version
 
-If these packages are already installed, skip to the next step.  
-Otherwise, install [Python](https://www.python.org/), the [pip package manager](https://pip.pypa.io/en/stable/installing/), and [Virtualenv](https://virtualenv.pypa.io/en/stable/):
+如果安装好了就跳过这一步，不然就一个个安装吧！ [Python](https://www.python.org/)、[pip package manager](https://pip.pypa.io/en/stable/installing/) 还有 [Virtualenv](https://virtualenv.pypa.io/en/stable/)：
 
 ### Ubuntu
 
@@ -39,40 +40,40 @@ Otherwise, install [Python](https://www.python.org/), the [pip package manager](
 
 ### mac OS
 
-Install using the [Homebrew](https://brew.sh/) package manager:
+使用 [Homebrew](https://brew.sh/) 安装：
 
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
-### Windows (Only for Python3)
+### Windows (仅 Python3)
 
-Install the _Microsoft Visual C++ 2015 Redistributable Update 3_. This comes with _Visual Studio 2015_ but can be installed separately:
+安装 _Microsoft Visual C++ 2015 Redistributable Update 3_，这个包含在 _Visual Studio 2015_ 里但是可以单独安装：
 
-1.  Go to the [Visual Studio downloads](https://visualstudio.microsoft.com/vs/older-downloads/),
-2.  Select _Redistributables and Build Tools_,
-3.  Download and install the _Microsoft Visual C++ 2015 Redistributable Update 3_.
+1.  进入 [Visual Studio 下载](https://visualstudio.microsoft.com/vs/older-downloads/)，
+2.  选择 _Redistributables and Build Tools_，
+3.  下载并安装 _Microsoft Visual C++ 2015 Redistributable Update 3_。
 
-Install the _64-bit_ [Python 3 release for Windows](https://www.python.org/downloads/windows/) (select `pip` as an optional feature).
+安装 _64 位_ [Python 3 release for Windows](https://www.python.org/downloads/windows/) (安装时选中 `pip` 选项).
 
     pip3 install -U pip virtualenv
 
-### Raspberry Pi
+### 树莓派
 
-Requirements for the [Raspbian](https://www.raspberrypi.org/downloads/raspbian/) operating system:
+要求 [Raspbian](https://www.raspberrypi.org/downloads/raspbian/) 操作系统：
 
     sudo apt update
 
-### Other
+### 其他系统
 
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 
-2\. Create a virtual environment (recommended)
+2\. 创建虚拟环境 (推荐)
 ----------------------------------------------
 
-Python virtual environments are used to isolate package installation from the system.
+Python 虚拟环境一般用来与系统中的 Python 环境相隔离。
 
 ### Ubuntu / mac OS
 
-Create a new virtual environment by choosing a Python interpreter and making a `./venv` directory to hold it:
+创建一个新的虚拟环境时要先选择一个 Python 解释器并且要创建一个文件夹（一般是 `./venv`）来存放虚拟环境的文件:
 
 Python2
 
@@ -83,43 +84,43 @@ Python3
     virtualenv --system-site-packages -p python3 ./venv
 
 
-Activate the virtual environment using a shell-specific command:
+通过以下命令来激活虚拟环境：
 
     source ./venv/bin/activate  # sh, bash, ksh, or zsh
 
-When virtualenv is active, your shell prompt is prefixed with `(venv)`.
+当虚拟环境激活时，命令行前面会有 `(venv)` 字样。
 
-Install packages within a virtual environment without affecting the host system setup. Start by upgrading `pip`:
+在虚拟环境内任意安装扩展包都不会影响系统中的配置。先升级 `pip`:
 
     pip install --upgrade pip
 
-And to exit virtualenv later:
+如果要退出虚拟环境:
 
     deactivate  # don't exit until you're done using TensorFlow
 
-### Windows(Only for Python3)
+### Windows(仅 Python3)
 
-Create a new virtual environment by choosing a Python interpreter and making a `./venv` directory to hold it:
+创建一个新的虚拟环境时要先选择一个 Python 解释器并且要创建一个文件夹（一般是 `./venv`）来存放虚拟环境的文件:
 
     virtualenv --system-site-packages -p python3 ./venv
 
-Activate the virtual environment:
+激活虚拟环境：
 
     .\venv\Scripts\activate
 
-Install packages within a virtual environment without affecting the host system setup. Start by upgrading `pip`:
+在虚拟环境内任意安装扩展包都不会影响系统中的配置。先升级 `pip`:
 
     pip install --upgrade pip
 
-And to exit virtualenv later:
+如果要退出虚拟环境:
 
     deactivate  # don't exit until you're done using TensorFlow
 
 ### Conda
 
-While we recommend the TensorFlow-provided _pip_ package, a _community-supported_ [Anaconda package](https://anaconda.org/conda-forge/tensorflow) is available.
+除了 _pip_ 安装包之外，还有_社区支持的_ [Anaconda 安装包](https://anaconda.org/conda-forge/tensorflow)可用。
 
-Create a new virtual environment by choosing a Python interpreter and making a `./venv` directory to hold it:
+创建一个新的虚拟环境时要先选择一个 Python 解释器并且要创建一个文件夹（一般是 `./venv`）来存放虚拟环境的文件:
 
 Python2
 
@@ -129,45 +130,45 @@ Python3
 
     conda create -n venv pip python=3.6  # select python version
 
-Activate the virtual environment:
+激活虚拟环境：
 
     source activate venv
 
-Within the virtual environment, install the TensorFlow pip package using its [complete URL](#package-location):
+在虚拟环境里，要用[完整的 URL](#package-location) 去安装：
 
     pip install --ignore-installed --upgrade packageURL
 
-And to exit virtualenv later:
+如果要退出虚拟环境:
 
     source deactivate
 
-3\. Install the TensorFlow pip package
+3\. 安装 TensorFlow pip 安装包
 --------------------------------------
 
-Choose one of the following TensorFlow packages to install [from PyPI](https://pypi.org/project/tensorflow/):
+选择下列之一的包安装：
 
-*   `tensorflow` —Current release for CPU-only _(recommended for beginners)_
-*   `tensorflow-gpu` —Current release with [GPU support](/docs/tensorflow/install/gpu) _(Ubuntu and Windows)_
-*   `tf-nightly` —Nightly build for CPU-only _(unstable)_
-*   `tf-nightly-gpu` —Nightly build with [GPU support](/docs/tensorflow/install/gpu) _(unstable, Ubuntu and Windows)_
+*   `tensorflow` — 仅支持 CPU 的当前发布版本 _(推荐初学者使用)_
+*   `tensorflow-gpu` — [支持 GPU](/docs/tensorflow/install/gpu) 的当前版本 _(Ubuntu 和 Windows)_
+*   `tf-nightly` — 仅支持 CPU 的快速迭代版本 _(不稳定)_
+*   `tf-nightly-gpu` — [支持 GPU](/docs/tensorflow/install/gpu) 的快速迭代版本 _(不稳定, Ubuntu 和 Windows)_
 
-Package dependencies are automatically installed. These are listed in the [`setup.py`](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/pip_package/setup.py) file under `REQUIRED_PACKAGES`.
+依赖包将会被自动安装，你可以在 [`setup.py`](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/pip_package/setup.py) 文件的 `REQUIRED_PACKAGES` 里找到全部的依赖包。
 
-### Virtualenv install
+### Virtualenv 安装
 
     pip install --upgrade tensorflow
 
-Verify the install:
+验证安装:
 
     python -c "import tensorflow as tf; print(tf.\_\_version\_\_)"
 
-### System install
+### 在系统里安装
 
 Python2
 
     pip install --user --upgrade tensorflow  # install in $HOME
 
-Verify the install:
+验证安装:
 
     python -c "import tensorflow as tf; print(tf.\_\_version\_\_)"
 
@@ -175,16 +176,16 @@ Python3
 
     pip3 install --user --upgrade tensorflow  # install in $HOME
 
-Verify the install:
+验证安装:
 
     python3 -c "import tensorflow as tf; print(tf.\_\_version\_\_)"
 
-**Success:** TensorFlow is now installed. Read the [tutorials](/docs/tensorflow/tutorials) to get started.
+> **成功：** TensorFlow 已经安装好了。 从 [教程](/docs/tensorflow/tutorials) 开始你的 TensorFlow 之旅吧！
 
 <a id="package-location"></a>
-## Package location
+## 安装包地址
 
-A few installation mechanisms require the URL of the TensorFlow Python package. The value you specify depends on your Python version.
+有些安装机制需要 Python 安装包的 URL，你可以根据你的系统和 Python 版本去选择你要安装的。
 
 <table>
   <tr><th>Version</th><th>URL</th></tr>
