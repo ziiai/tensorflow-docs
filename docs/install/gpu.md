@@ -1,55 +1,48 @@
-# GPU support
+# GPU 支持
 
-TensorFlow GPU support requires an assortment of drivers and libraries. To
-simplify installation and avoid library conflicts, we recommend using a
-[TensorFlow Docker image with GPU support](/docs/tensorflow/install/docker) (Linux only). This setup
-only requires the [NVIDIA® GPU drivers](https://www.nvidia.com/drivers).
+TensorFlow GPU 版本需要有相关的驱动和软件库的支持。为了简化安装和避免引起冲突我们还是建议你使用
+[包含 GPU 支持的 TensorFlow Docker 镜像](/docs/tensorflow/install/docker) (仅 Linux)，这样的话只需要设置
+[NVIDIA® GPU 驱动](https://www.nvidia.com/drivers)就行了。
 
-## Hardware requirements
+## 硬件要求
 
-The following GPU-enabled devices are supported:
+要有支持 GPU 的显卡设备：
 
-* NVIDIA® GPU card with CUDA® Compute Capability 3.5 or higher. See the list of
-  [CUDA-enabled GPU cards](https://developer.nvidia.com/cuda-gpus).
+* 计算力 3.5 及以上的 NVIDIA® GPU 显卡。请参阅 [CUDA GPU 显卡](https://developer.nvidia.com/cuda-gpus)列表。
 
-## Software requirements
+## 软件要求
 
-The following NVIDIA® software must be installed on your system:
+系统要装以下 NVIDIA® 软件:
 
-* [NVIDIA® GPU drivers](https://www.nvidia.com/drivers) —CUDA 9.0 requires 384.x or higher.
-* [CUDA® Toolkit](https://developer.nvidia.com/cuda-zone) —TensorFlow supports CUDA 9.0.
-* [CUPTI](http://docs.nvidia.com/cuda/cupti/) ships with the CUDA Toolkit.
+* [NVIDIA® GPU drivers](https://www.nvidia.com/drivers) —CUDA 9.0 要求 384.x 或更高。
+* [CUDA® Toolkit](https://developer.nvidia.com/cuda-zone) —TensorFlow 支持 CUDA 9.0。
+* [CUPTI](http://docs.nvidia.com/cuda/cupti/) 包含在 CUDA Toolkit 里。
 * [cuDNN SDK](https://developer.nvidia.com/cudnn) (>= 7.2)
-* *(Optional)* [NCCL 2.2](https://developer.nvidia.com/nccl) for multiple GPU support.
-* *(Optional)* [TensorRT 4.0](https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html)
-  to improve latency and throughput for inference on some models.
+* *(可选)* [NCCL 2.2](https://developer.nvidia.com/nccl) 多 GPU 支持。
+* *(可选)* [TensorRT 4.0](https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html)
+  改善某些性能。
 
-## Linux setup
+## Linux 设置
 
-The `apt` instructions below are the easiest way to install the required NVIDIA
-software on Ubuntu. However, if [building TensorFlow from source](/docs/tensorflow/install/source),
-manually install the software requirements listed above, and consider using a
-`-devel` [TensorFlow Docker image](/docs/tensorflow/install/docker) as a base.
+下面的 `apt` 命令能很方便地在 Ubuntu 上安装 NVIDIA 软件。但如果你是 [源码安装](/docs/tensorflow/install/source)的话，
+你需要手动安装上述的软件，还有考虑一下使用
+`-devel` [TensorFlow Docker 镜像](/docs/tensorflow/install/docker)。
 
-Install [CUPTI](http://docs.nvidia.com/cuda/cupti/) which ships with
-the CUDA® Toolkit. Append its installation directory to the `$LD_LIBRARY_PATH`
-environmental variable:
+安装 CUDA® Toolkit 自带的 [CUPTI](http://docs.nvidia.com/cuda/cupti/)，并将其安装目录添加到 `$LD_LIBRARY_PATH` 环境变量：
 
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/lib64
 
-For a GPU with CUDA Compute Capability 3.0, or different versions of the
-NVIDIA libraries, see the [Linux build from source](/docs/tensorflow/install/source) guide.
+如果是算力 3.0 的 GPU 或者不同版本 NVIDIA 库 的话，请参阅 [Linux 上源码安装](/docs/tensorflow/install/source)指南。
 
 ### Install CUDA with apt
 
-For Ubuntu&nbsp;16.04—and possibly other Debian-based Linux distros—add the
-NVIDIA package repository and use `apt` to install CUDA.
+对于 Ubuntu 16.04 或者其他基于 Debian 的 Linux 系统，先添加 NVIDIA 包仓库再用 `apt` 安装 CUDA。
 
-Caution: `apt` installs the NVIDIA libraries and headers to locations that make
+注意: `apt` installs the NVIDIA libraries and headers to locations that make
 it difficult to configure and debug build issues.
 
 
-# Add NVIDIA package repository
+# 添加 NVIDIA 包仓库
     sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub
     wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_9.1.85-1_amd64.deb
     sudo apt install ./cuda-repo-ubuntu1604_9.1.85-1_amd64.deb
@@ -57,29 +50,26 @@ it difficult to configure and debug build issues.
     sudo apt install ./nvidia-machine-learning-repo-ubuntu1604_1.0.0-1_amd64.deb
     sudo apt update
 
-# Install CUDA and tools. Include optional NCCL 2.x
+# 安装 CUDA 及其他工具，包括可选的 NCCL 2.x
     sudo apt install cuda9.0 cuda-cublas-9-0 cuda-cufft-9-0 cuda-curand-9-0 \
     cuda-cusolver-9-0 cuda-cusparse-9-0 libcudnn7=7.2.1.38-1+cuda9.0 \
     libnccl2=2.2.13-1+cuda9.0 cuda-command-line-tools-9-0
 
-# Optional: Install the TensorRT runtime (must be after CUDA install)
+# 可选: 安装 TensorRT 运行时 (必须在 CUDA 安装好之后)
     sudo apt update
     sudo apt install libnvinfer4=4.1.2-1+cuda9.0
     
-## Windows setup
+## Windows 设置
 
-See the [hardware requirements](#hardware_requirements) and
-[software requirements](#software_requirements) listed above. Read the
-[CUDA® install guide for Windows](https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/).
+参考上文的 [硬件要求](#hardware_requirements) 和
+[软件要求](#software_requirements)，还有
+[Windows CUDA® 安装指南](https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/).
 
-Make sure the installed NVIDIA software packages match the versions listed above. In
-particular, TensorFlow will not load without the `cuDNN64_7.dll` file. To use a
-different version, see the [Windows build from source](/docs/tensorflow/install/source_windows) guide.
+务必确保所安装的软件版本要匹配。如果没有 `cuDNN64_7.dll` 文件，TensorFlow 将不会运行。如果要用不同的版本，请参考 [Windows 源码安装](/docs/tensorflow/install/source_windows)。
 
-Add the CUDA, CUPTI, and cuDNN installation directories to the `%PATH%`
-environmental variable. For example, if the CUDA Toolkit is installed to
-`C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.0` and cuDNN to
-`C:\tools\cuda`, update your `%PATH%` to match:
+将 CUDA、CUPTI、和 cuDNN 安装目录添加到 `%PATH%` 环境变量中。比如 CUDA Toolkit 安装在
+`C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.0` ， cuDNN 在
+`C:\tools\cuda`，按照下列更新 `%PATH%`：
 
     SET PATH=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.0\bin;%PATH%
     SET PATH=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.0\extras\CUPTI\libx64;%PATH%

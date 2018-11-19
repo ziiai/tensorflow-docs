@@ -45,7 +45,7 @@ docker run -it -p 8888:8888 tensorflow/tensorflow  # Start a Jupyter notebook se
 
 不需要安装 —— 直接在浏览器打开 <a href="https://colab.research.google.com/notebooks/welcome.ipynb" target="_blank">Colaboratory</a>
 就可以运行 <a href="/docs/tensorflow/tutorials">TensorFlow 教程</a>。Google Colab 是谷歌的一项致力于传播机器学习教育和研究的研究项目，是一个已经配置好的 Jupyter Notebook 云编程环境。
-<a href="https://medium.com/tensorflow/colab-an-easy-way-to-learn-and-use-tensorflow-d74d1686e309" target="_blank">阅读博客</a>。
+<a href="https://www.ziiai.com/blog/765" target="_blank">阅读博客</a>。
 
 ## 创建你的第一个机器学习应用
 在网页和移动端创建和部署 TensorFlow 模型。
