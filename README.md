@@ -1,4 +1,4 @@
-<img src="https://github.com/ziiai/tensorflow-docs/images/index_cover.png" align="center/>
+<p style="align:center"><img src="https://github.com/ziiai/tensorflow-docs/blob/master/images/index_cover.png"/></p>
 
 官方网站（英文）：
 [https://tensorflow.org/](https://tensorflow.org/)
