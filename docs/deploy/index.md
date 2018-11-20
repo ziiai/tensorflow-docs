@@ -1,14 +1,10 @@
-# Deploy
+# 部署
 
-This section focuses on deploying real-world models.
+本部分将关注部署真实模型。
 
-* [Distributed TensorFlow](../deploy/distributed.md), which explains how to create
-  a cluster of TensorFlow servers.
-* [TensorFlow on Hadoop](../deploy/hadoop.md)
-* [TensorFlow on S3](../deploy/s3.md)
-* [TensorFlow serving](/serving), an open-source, flexible, high-performance
-  serving system for machine-learned models designed for production environments.
-  TensorFlow Serving provides out-of-the-box integration with TensorFlow models.
-* [TensorFlow Extended (TFX)](/tfx) is an end-to-end machine learning platform
-  for TensorFlow. Implemented at Google, we've open sourced some TFX libraries
-  with the rest of the system to come.
+* [分布式 TensorFlow](/docs/tensorflow/deploy/distributed)，如何创建一个 TensorFlow 服务器集群。
+* [在 Hadoop 上 部署 TensorFlow](/docs/tensorflow/deploy/hadoop)
+* [在 S3 上部署 TensorFlow](/docs/tensorflow/deploy/s3)
+* [TensorFlow serving](https://tensorflow.org/serving)一个为生产环境设计的，开源、灵活的、高性能的机器学习模型服务系统。
+  TensorFlow Serving 集成了许多开箱机用的模型。
+* [TensorFlow Extended (TFX)](https://tensorflow.org/tfx) 一个端对端的 TensorFlow 机器学习平台。

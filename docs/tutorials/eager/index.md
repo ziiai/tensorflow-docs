@@ -1,13 +1,10 @@
-# Research and experimentation
+# 研究和实验
 
-Eager execution provides an imperative, define-by-run interface for advanced
-operations. Write custom layers, forward passes, and training loops with
-auto&nbsp;differentiation. Start with these notebooks, then read the
-[eager execution guide](../../guide/eager).
+Eager Execution 提供了由运行定义的命令式高级操作接口。通过自动微分编写自定义层、前向传播和训练循环。请先查看下列内容，然后阅读
+[Eager Execution 指南](/docs/tensorflow/guide/eager).
 
-1. [Eager execution](eager_basics.ipynb)
-2. [Automatic differentiation and gradient tape](automatic_differentiation.ipynb)
-3. [Custom training: basics](custom_training.ipynb)
-4. [Custom layers](custom_layers.ipynb)
-5. [Custom training: walkthrough](custom_training_walkthrough.ipynb)
-
+1. [Eager execution](/docs/tensorflow/tutorials/eager/eager_basics)
+2. [自动微分和梯度记录](/docs/tensorflow/tutorials/eager/automatic_differentiation)
+3. [自定义训练：基础知识](/docs/tensorflow/tutorials/eager/custom_training)
+4. [自定义层](/docs/tensorflow/tutorials/eager/custom_layers)
+5. [自定义训练：演示](/docs/tensorflow/tutorials/eager/custom_training_walkthrough)

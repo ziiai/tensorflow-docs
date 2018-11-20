@@ -92,7 +92,7 @@
 
 - ## 指南
 
-    - [TensorFlow Guide](/docs/tensorflow/guide)
+    - [概览](/docs/tensorflow/guide)
     - ### 高阶 API
     - [Keras](/docs/tensorflow/guide/keras)
     - [Eager Execution](/docs/tensorflow/guide/eager)
@@ -130,7 +130,7 @@
     - [概览](/docs/tensorflow/performance/overview)
     - [数据输入管道](/docs/tensorflow/performance/datasets)
     - [基准](/docs/tensorflow/performance/benchmarks)
-        
+
 - ## 扩展
     - [TensorFlow 架构](/docs/tensorflow/extend/architecture)
     - [创建一个 Op](/docs/tensorflow/extend/adding_an_op)
