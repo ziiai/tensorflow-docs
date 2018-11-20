@@ -1,102 +1,57 @@
-# Vector Representations of Words
+# 字词的向量表示法
 
-In this tutorial we look at the word2vec model by
-[Mikolov et al.](https://papers.nips.cc/paper/5021-distributed-representations-of-words-and-phrases-and-their-compositionality.pdf)
-This model is used for learning vector representations of words, called "word
-embeddings".
+在本教程中，我们将介绍由
+[Mikolov 等](https://papers.nips.cc/paper/5021-distributed-representations-of-words-and-phrases-and-their-compositionality.pdf)
+提供的 word2vec 模型。该模型用于学习字词的向量表示法，称为“字词嵌入”。
 
-## Highlights
+## 要点
 
-This tutorial is meant to highlight the interesting, substantive parts of
-building a word2vec model in TensorFlow.
+本教程旨在重点介绍在 TensorFlow 中构建 word2vec 模型时的一些有趣且重要的部分。
 
-* We start by giving the motivation for why we would want to
-represent words as vectors.
-* We look at the intuition behind the model and how it is trained
-(with a splash of math for good measure).
-* We also show a simple implementation of the model in TensorFlow.
-* Finally, we look at ways to make the naive version scale better.
+- 我们将先说明将字词表示为向量的动机。
+- 我们会介绍模型的原理及其训练方式（用数学方法进行有效衡量）。
+- 我们还会在 TensorFlow 中展示模型的简单实现。
+- 最后，我们会介绍如何提高该简单版本的扩展性能。
 
-We walk through the code later during the tutorial, but if you'd prefer to dive
-straight in, feel free to look at the minimalistic implementation in
+我们会在本教程的后面部分介绍代码，但如果您想直接深入研究代码，欢迎随时查看
 [tensorflow/examples/tutorials/word2vec/word2vec_basic.py](https://www.tensorflow.org/code/tensorflow/examples/tutorials/word2vec/word2vec_basic.py)
-This basic example contains the code needed to download some data, train on it a
-bit and visualize the result. Once you get comfortable with reading and running
-the basic version, you can graduate to
+中的简化实现。此基本示例包含下载某些数据、根据这些数据进行训练以及可视化结果所需的代码。在您可以自如阅读和运行基本版本后，您就可以查看
 [models/tutorials/embedding/word2vec.py](https://github.com/tensorflow/models/tree/master/tutorials/embedding/word2vec.py)
-which is a more serious implementation that showcases some more advanced
-TensorFlow principles about how to efficiently use threads to move data into a
-text model, how to checkpoint during training, etc.
+中更复杂的实现，其中展示了有关如何有效使用线程将数据移到文本模型、如何在训练期间设置检查点等更高级的 TensorFlow 原则。
 
-But first, let's look at why we would want to learn word embeddings in the first
-place. Feel free to skip this section if you're an Embedding Pro and you'd just
-like to get your hands dirty with the details.
+首先，我们来了解一下为何要学习字词嵌入。如果您是嵌入方面的行家且只想弄清楚细节部分，请自行跳过此部分。
 
-## Motivation: Why Learn Word Embeddings?
+## 动机：为什么学习字词嵌入？
 
-Image and audio processing systems work with rich, high-dimensional datasets
-encoded as vectors of the individual raw pixel-intensities for image data, or
-e.g. power spectral density coefficients for audio data. For tasks like object
-or speech recognition we know that all the information required to successfully
-perform the task is encoded in the data (because humans can perform these tasks
-from the raw data).  However, natural language processing systems traditionally
-treat words as discrete atomic symbols, and therefore 'cat' may be represented
-as  `Id537` and 'dog' as `Id143`.  These encodings are arbitrary, and provide
-no useful information to the system regarding the relationships that may exist
-between the individual symbols. This means that the model can leverage
-very little of what it has learned about 'cats' when it is processing data about
-'dogs' (such that they are both animals, four-legged, pets, etc.). Representing
-words as unique, discrete ids furthermore leads to data sparsity, and usually
-means that we may need more data in order to successfully train statistical
-models.  Using vector representations can overcome some of these obstacles.
+图像和音频处理系统采用的是庞大的高维度数据集，对于图像数据来说，此类数据集会编码为单个原始像素强度的向量，对于音频数据来说，则编码为功率谱密度系数。对于对象识别或语音识别这样的任务，我们知道成功执行任务所需的所有信息都在数据中进行了编码（因为人类可以从原始数据执行这些任务）。不过，自然语言处理系统一直以来都将字词视为离散的原子符号，因此“cat”可能表示为 `Id537`，“dog”可能表示为 `Id143`。这些编码是任意的，并未向系统提供有关各个符号之间可能存在的关系的有用信息。这意味着模型在处理有关“狗”的数据时，几乎不可能利用到它所学的关于“猫”的知识（例如它们都属于动物、宠物，有四条腿等）。将字词表示为唯一的离散 ID 还会导致数据稀疏性，并且通常意味着我们可能需要更多数据才能成功训练统计模型。使用向量表示法可以扫除其中一些障碍。
 
 <div style="width:100%; margin:auto; margin-bottom:10px; margin-top:20px;">
-<img style="width:100%" src="https://www.tensorflow.org/images/audio-image-text.png" alt>
+<img style="width:100%" src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/audio-image-text.png" alt>
 </div>
 
-[Vector space models](https://en.wikipedia.org/wiki/Vector_space_model) (VSMs)
-represent (embed) words in a continuous vector space where semantically
-similar words are mapped to nearby points ('are embedded nearby each other').
-VSMs have a long, rich history in NLP, but all methods depend in some way or
-another on the
-[Distributional Hypothesis](https://en.wikipedia.org/wiki/Distributional_semantics#Distributional_Hypothesis),
-which states that words that appear in the same contexts share
-semantic meaning. The different approaches that leverage this principle can be
-divided into two categories: *count-based methods* (e.g.
-[Latent Semantic Analysis](https://en.wikipedia.org/wiki/Latent_semantic_analysis)),
-and *predictive methods* (e.g.
-[neural probabilistic language models](http://www.scholarpedia.org/article/Neural_net_language_models)).
+[向量空间模型](https://en.wikipedia.org/wiki/Vector_space_model)
+(VSM) 在连续向量空间中表示（嵌入）字词，其中语义相似的字词会映射到附近的点（“在彼此附近嵌入”）。VSM 在 NLP 方面有着悠久而丰富的历史，但所有方法均以某种方式依赖于
+[分布假设](https://en.wikipedia.org/wiki/Distributional_semantics#Distributional_Hypothesis)
+，这种假设指明在相同上下文中显示的字词语义相同。利用该原则的不同方法可分为两类：基于计数的方法（例如
+[潜在语义分析](https://en.wikipedia.org/wiki/Latent_semantic_analysis)
+）以及预测方法（例如
+[神经概率语言模型](http://www.scholarpedia.org/article/Neural_net_language_models)）。
 
 This distinction is elaborated in much more detail by
-[Baroni et al.](http://clic.cimec.unitn.it/marco/publications/acl2014/baroni-etal-countpredict-acl2014.pdf),
-but in a nutshell: Count-based methods compute the statistics of
-how often some word co-occurs with its neighbor words in a large text corpus,
-and then map these count-statistics down to a small, dense vector for each word.
-Predictive models directly try to predict a word from its neighbors in terms of
-learned small, dense *embedding vectors* (considered parameters of the
-model).
+[Baroni 等](http://clic.cimec.unitn.it/marco/publications/acl2014/baroni-etal-countpredict-acl2014.pdf)
+很详细地阐述了这两大类别的区别。简而言之：基于计数的方法会计算在大型文本语料库中，一些字词与临近字词共同出现的频率统计数据，然后将这些计数统计数据向下映射到每个字词的小型密集向量。预测模型会根据学到的小型密集嵌入向量（被视为模型的参数），直接尝试预测临近的字词。
 
-Word2vec is a particularly computationally-efficient predictive model for
-learning word embeddings from raw text. It comes in two flavors, the Continuous
-Bag-of-Words model (CBOW) and the Skip-Gram model (Section 3.1 and 3.2 in [Mikolov et al.](https://arxiv.org/pdf/1301.3781.pdf)). Algorithmically, these
-models are similar, except that CBOW predicts target words (e.g. 'mat') from
-source context words ('the cat sits on the'), while the skip-gram does the
-inverse and predicts source context-words from the target words. This inversion
-might seem like an arbitrary choice, but statistically it has the effect that
-CBOW smoothes over a lot of the distributional information (by treating an
-entire context as one observation). For the most part, this turns out to be a
-useful thing for smaller datasets. However, skip-gram treats each context-target
-pair as a new observation, and this tends to do better when we have larger
-datasets. We will focus on the skip-gram model in the rest of this tutorial.
+Word2vec 是一种计算效率特别高的预测模型，用于学习原始文本中的字词嵌入。它分为两种类型：连续词袋模型 (CBOW) 和 Skip-Gram 模型（请参阅
+[Mikolov 等](https://arxiv.org/pdf/1301.3781.pdf))中的第 3.1 和 3.2 部分）。从算法上看，这些模型比较相似，只是 CBOW 从源上下文字词（“the cat sits on the”）中预测目标字词（例如“mat”），而 skip-gram 则逆向而行，从目标字词中预测源上下文字词。这种调换似乎是一种随意的选择，但从统计学上来看，它有助于 CBOW 整理很多分布信息（通过将整个上下文视为一个观察对象）。在大多数情况下，这对于小型数据集来说是很有用的。但是，skip-gram 将每个上下文-目标对视为一个新的观察对象，当我们使用大型数据集时，skip-gram 似乎能发挥更好的效果。在本教程接下来的部分，我们将重点介绍 skip-gram 模型。
 
 
-## Scaling up with Noise-Contrastive Training
+## 通过噪声对比训练进行扩展
 
-Neural probabilistic language models are traditionally trained using the
-[maximum likelihood](https://en.wikipedia.org/wiki/Maximum_likelihood) (ML)
-principle  to maximize the probability of the next word \\(w_t\\) (for "target")
-given the previous words \\(h\\) (for "history") in terms of a
-[*softmax* function](https://en.wikipedia.org/wiki/Softmax_function),
+神经概率语言模型一直以来都使用
+[最大似然率](https://en.wikipedia.org/wiki/Maximum_likelihood)
+(ML) 原则进行训练，以最大限度地提高使用
+[*softmax* 函数](https://en.wikipedia.org/wiki/Softmax_function)
+根据之前的字词 \\(h\\)（表示“历史”字词）正确预测出下一个字词 \\(w_t\\)（表示“目标”字词）的概率。
 
 $$
 \begin{align}
@@ -125,7 +80,7 @@ probability using the score for all other \\(V\\) words \\(w'\\) in the current
 context \\(h\\), *at every training step*.
 
 <div style="width:60%; margin:auto; margin-bottom:10px; margin-top:20px;">
-<img style="width:100%" src="https://www.tensorflow.org/images/softmax-nplm.png" alt>
+<img style="width:100%" src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/softmax-nplm.png" alt>
 </div>
 
 On the other hand, for feature learning in word2vec we do not need a full
@@ -136,7 +91,7 @@ same context. We illustrate this below for a CBOW model. For skip-gram the
 direction is simply inverted.
 
 <div style="width:60%; margin:auto; margin-bottom:10px; margin-top:20px;">
-<img style="width:100%" src="https://www.tensorflow.org/images/nce-nplm.png" alt>
+<img style="width:100%" src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/nce-nplm.png" alt>
 </div>
 
 Mathematically, the objective (for each example) is to maximize
@@ -165,39 +120,27 @@ much faster to train. We will actually make use of the very similar
 [noise-contrastive estimation (NCE)](https://papers.nips.cc/paper/5165-learning-word-embeddings-efficiently-with-noise-contrastive-estimation.pdf)
 loss, for which TensorFlow has a handy helper function `tf.nn.nce_loss()`.
 
-Let's get an intuitive feel for how this would work in practice!
+下面我们在实践中直观了解下相关工作原理！
 
 ## The Skip-gram Model
 
-As an example, let's consider the dataset
+以下面的数据集为例
 
 `the quick brown fox jumped over the lazy dog`
 
-We first form a dataset of words and the contexts in which they appear. We
-could define 'context' in any way that makes sense, and in fact people have
-looked at syntactic contexts (i.e. the syntactic dependents of the current
-target word, see e.g.
-[Levy et al.](https://levyomer.files.wordpress.com/2014/04/dependency-based-word-embeddings-acl-2014.pdf)),
-words-to-the-left of the target, words-to-the-right of the target, etc. For now,
-let's stick to the vanilla definition and define 'context' as the window
-of words to the left and to the right of a target word. Using a window
-size of 1, we then have the dataset
+首先形成一个数据集，其中包含字词以及字词在其中出现的上下文。我们可以通过任何有意义的方式定义“上下文”，事实上人们研究了语法上下文（即当前目标字词的语法依赖项，具体示例请参阅
+[Levy et al.](https://levyomer.files.wordpress.com/2014/04/dependency-based-word-embeddings-acl-2014.pdf)
+）、目标左侧的字词、目标右侧的字词等。暂时我们使用 vanilla 定义，将“上下文”定义为目标字词左侧和右侧的字词窗口。使用大小为 1 的窗口，我们将获得以下数据集
 
 `([the, brown], quick), ([quick, fox], brown), ([brown, jumped], fox), ...`
 
-of `(context, target)` pairs. Recall that skip-gram inverts contexts and
-targets, and tries to predict each context word from its target word, so the
-task becomes to predict 'the' and 'brown' from 'quick', 'quick' and 'fox' from
-'brown', etc. Therefore our dataset becomes
+其中包含多组 `(context, target)` 对。回想一下，`skip-gram` 会调换上下文和目标，并尝试根据其目标字词预测每个上下文字词。因此，任务变成根据“quick”预测“the”和“brown”、根据“brown”预测“quick”和“fox”，等等。这样一来，我们的数据集就变成了
 
 `(quick, the), (quick, brown), (brown, quick), (brown, fox), ...`
 
-of `(input, output)` pairs.  The objective function is defined over the entire
-dataset, but we typically optimize this with
+其中包含多组 `(input, output)` 对。目标函数基于整个数据集进行定义，但我们通常使用
 [stochastic gradient descent](https://en.wikipedia.org/wiki/Stochastic_gradient_descent)
-(SGD) using one example at a time (or a 'minibatch' of `batch_size` examples,
-where typically `16 <= batch_size <= 512`). So let's look at one step of
-this process.
+ (SGD) 进行优化，并且一次使用一个样本（或大小为 `batch_size` 的小批次样本，通常 `16 <= batch_size <= 512`）。我们来看看这个过程的一个时间步。
 
 Let's imagine at training step \\(t\\) we observe the first training case above,
 where the goal is to predict `the` from `quick`. We select `num_noise` number
@@ -233,33 +176,28 @@ below (see also for example
 [Mikolov et al., 2013](https://www.aclweb.org/anthology/N13-1090)).
 
 <div style="width:100%; margin:auto; margin-bottom:10px; margin-top:20px;">
-<img style="width:100%" src="https://www.tensorflow.org/images/linear-relationships.png" alt>
+<img style="width:100%" src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/linear-relationships.png" alt>
 </div>
 
-This explains why these vectors are also useful as features for many canonical
-NLP prediction tasks, such as part-of-speech tagging or named entity recognition
-(see for example the original work by
-[Collobert et al., 2011](https://arxiv.org/abs/1103.0398)
-([pdf](https://arxiv.org/pdf/1103.0398.pdf)), or follow-up work by
-[Turian et al., 2010](https://www.aclweb.org/anthology/P10-1040)).
+这就解释了为什么这些向量也可用作很多规范 NLP 预测任务（例如词性标注或命名实体识别）的特征（示例请参阅
+[Collobert 等人在 2011 年](https://arxiv.org/abs/1103.0398)
+发表的原始论文 (
+[pdf](https://arxiv.org/pdf/1103.0398.pdf)
+)，或者
+[Turian 等人在 2010 年](https://www.aclweb.org/anthology/P10-1040)发表的后续论文）。
 
-But for now, let's just use them to draw pretty pictures!
+暂时我们先用它们绘制漂亮的图片吧！
 
-## Building the Graph
+## 构建图
 
-This is all about embeddings, so let's define our embedding matrix.
-This is just a big random matrix to start.  We'll initialize the values to be
-uniform in the unit cube.
+图主要与嵌入相关，因此我们先定义嵌入矩阵。它其实就是一个大型随机矩阵。我们将初始化值，使其在单位立方体中保持统一。
 
 ```python
 embeddings = tf.Variable(
     tf.random_uniform([vocabulary_size, embedding_size], -1.0, 1.0))
 ```
 
-The noise-contrastive estimation loss is defined in terms of a logistic regression
-model. For this, we need to define the weights and biases for each word in the
-vocabulary (also called the `output weights` as opposed to the `input
-embeddings`). So let's define that.
+噪声对比估计损失是基于逻辑回归模型进行定义的。为此，我们需要为词汇表中的每个字词定义权重和偏差（也称为 `output weights`，与 `input embeddings` 相对）。我们先进行定义。
 
 ```python
 nce_weights = tf.Variable(
@@ -268,14 +206,9 @@ nce_weights = tf.Variable(
 nce_biases = tf.Variable(tf.zeros([vocabulary_size]))
 ```
 
-Now that we have the parameters in place, we can define our skip-gram model
-graph. For simplicity, let's suppose we've already integerized our text corpus
-with a vocabulary so that each word is represented as an integer (see
+现在参数已设置完毕，我们可以定义 skip-gram 模型图了。为简单起见，假设我们已将文本语料库与词汇表进行整合，以便每个字词都表示为一个整数（如需了解详情，请访问
 [tensorflow/examples/tutorials/word2vec/word2vec_basic.py](https://www.tensorflow.org/code/tensorflow/examples/tutorials/word2vec/word2vec_basic.py)
-for the details). The skip-gram model takes two inputs. One is a batch full of
-integers representing the source context words, the other is for the target
-words. Let's create placeholder nodes for these inputs, so that we can feed in
-data later.
+）。skip-gram 模型有两个输入。一个是表示源上下文字词的整数批次，另一个是表示目标字词的整数批次。下面我们为这些输入创建占位符节点，以便之后馈送这些数据。
 
 ```python
 # Placeholders for inputs
@@ -283,15 +216,13 @@ train_inputs = tf.placeholder(tf.int32, shape=[batch_size])
 train_labels = tf.placeholder(tf.int32, shape=[batch_size, 1])
 ```
 
-Now what we need to do is look up the vector for each of the source words in
-the batch.  TensorFlow has handy helpers that make this easy.
+现在，我们需要做的是查询批次中每个源字词的向量。TensorFlow 提供的便利辅助函数可简化这一操作。
 
 ```python
 embed = tf.nn.embedding_lookup(embeddings, train_inputs)
 ```
 
-Ok, now that we have the embeddings for each word, we'd like to try to predict
-the target word using the noise-contrastive training objective.
+现在，每个字词均有嵌入，我们希望尝试使用噪声对比训练目标来预测目标字词。
 
 ```python
 # Compute the NCE loss, using a sample of the negative labels each time.
@@ -304,21 +235,16 @@ loss = tf.reduce_mean(
                  num_classes=vocabulary_size))
 ```
 
-Now that we have a loss node, we need to add the nodes required to compute
-gradients and update the parameters, etc. For this we will use stochastic
-gradient descent, and TensorFlow has handy helpers to make this easy as well.
+现在我们有一个损失节点，下面需要添加计算梯度并更新参数等所需的节点。为此，我们将使用随机梯度下降法，而 TensorFlow 提供的便利辅助函数也可简化这一操作。
 
 ```python
 # We use the SGD optimizer.
 optimizer = tf.train.GradientDescentOptimizer(learning_rate=1.0).minimize(loss)
 ```
 
-## Training the Model
+## 训练模型
 
-Training the model is then as simple as using a `feed_dict` to push data into
-the placeholders and calling
-`tf.Session.run` with this new data
-in a loop.
+训练模型再简单不过了，只需使用 `feed_dict` 将数据推入占位符并循环地使用此新数据调用 `tf.Session.run` 即可。
 
 ```python
 for inputs, labels in generate_batch(...):
@@ -326,16 +252,15 @@ for inputs, labels in generate_batch(...):
   _, cur_loss = session.run([optimizer, loss], feed_dict=feed_dict)
 ```
 
-See the full example code in
-[tensorflow/examples/tutorials/word2vec/word2vec_basic.py](https://www.tensorflow.org/code/tensorflow/examples/tutorials/word2vec/word2vec_basic.py).
+如需查看完整的示例代码，请访问
+[tensorflow/examples/tutorials/word2vec/word2vec_basic.py](https://www.tensorflow.org/code/tensorflow/examples/tutorials/word2vec/word2vec_basic.py)。
 
-## Visualizing the Learned Embeddings
+## 可视化学到的嵌入
 
-After training has finished we can visualize the learned embeddings using
-t-SNE.
+训练结束后，我们可以使用 t-SNE 可视化学到的嵌入。
 
 <div style="width:100%; margin:auto; margin-bottom:10px; margin-top:20px;">
-<img style="width:100%" src="https://www.tensorflow.org/images/tsne.png" alt>
+<img style="width:100%" src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tsne.png" alt>
 </div>
 
 Et voila! As expected, words that are similar end up clustering nearby each
@@ -343,63 +268,36 @@ other. For a more heavyweight implementation of word2vec that showcases more of
 the advanced features of TensorFlow, see the implementation in
 [models/tutorials/embedding/word2vec.py](https://github.com/tensorflow/models/tree/master/tutorials/embedding/word2vec.py).
 
-## Evaluating Embeddings: Analogical Reasoning
+## 评估嵌入：类比推理
 
-Embeddings are useful for a wide variety of prediction tasks in NLP. Short of
-training a full-blown part-of-speech model or named-entity model, one simple way
-to evaluate embeddings is to directly use them to predict syntactic and semantic
-relationships like `king is to queen as father is to ?`. This is called
-*analogical reasoning* and the task was introduced by
-[Mikolov and colleagues
-](https://www.aclweb.org/anthology/N13-1090).
-Download the dataset for this task from
-[download.tensorflow.org](http://download.tensorflow.org/data/questions-words.txt).
+嵌入对于 NLP 中的各种预测任务来说非常有用。除了训练一个成熟的词性模型或命名实体模型之外，评估嵌入的一种简单方法是直接使用它们预测语法和语义关系（如 `king is to queen as father is to ?`）。这种方法称为类比推理，
+[Mikolov 及其同事](https://www.aclweb.org/anthology/N13-1090).
+介绍了这项任务。请从
+[download.tensorflow.org](http://download.tensorflow.org/data/questions-words.txt)
+下载此任务的数据集。
 
-To see how we do this evaluation, have a look at the `build_eval_graph()` and
-`eval()` functions in
-[models/tutorials/embedding/word2vec.py](https://github.com/tensorflow/models/tree/master/tutorials/embedding/word2vec.py).
+如需了解我们如何进行此评估，请参阅
+[models/tutorials/embedding/word2vec.py](https://github.com/tensorflow/models/tree/master/tutorials/embedding/word2vec.py)
+中的 `build_eval_graph()` 和 `eval()` 函数。
 
-The choice of hyperparameters can strongly influence the accuracy on this task.
-To achieve state-of-the-art performance on this task requires training over a
-very large dataset, carefully tuning the hyperparameters and making use of
-tricks like subsampling the data, which is out of the scope of this tutorial.
+超参数的选择可极大影响此任务的准确率。要在此任务中实现领先的性能，我们需要用非常大型的数据集进行训练、仔细调整超参数并使用诸如对数据进行下采样等技巧，这些内容不在本教程的探讨范围内。
 
 
-## Optimizing the Implementation
+## 优化实现
 
-Our vanilla implementation showcases the flexibility of TensorFlow. For
-example, changing the training objective is as simple as swapping out the call
-to `tf.nn.nce_loss()` for an off-the-shelf alternative such as
-`tf.nn.sampled_softmax_loss()`. If you have a new idea for a loss function, you
-can manually write an expression for the new objective in TensorFlow and let
-the optimizer compute its derivatives. This flexibility is invaluable in the
-exploratory phase of machine learning model development, where we are trying
-out several different ideas and iterating quickly.
+我们的 vanilla 实现展示了 TensorFlow 的灵活性。例如，更改训练目标很简单，直接将对 `tf.nn.nce_loss()` 的调用替换成 `tf.nn.sampled_softmax_loss()` 等现成备用方案即可。如果您对损失函数有新的想法，可以在 TensorFlow 中为新目标手动编写表达式，并让优化器计算其导数。这种灵活性在机器学习模型开发的探索阶段非常宝贵，在这一阶段，我们会尝试几种不同的想法并快速迭代。
 
-Once you have a model structure you're satisfied with, it may be worth
-optimizing your implementation to run more efficiently (and cover more data in
-less time).  For example, the naive code we used in this tutorial would suffer
-compromised speed because we use Python for reading and feeding data items --
-each of which require very little work on the TensorFlow back-end.  If you find
-your model is seriously bottlenecked on input data, you may want to implement a
-custom data reader for your problem, as described in
-[New Data Formats](../../extend/new_data_formats.md).  For the case of Skip-Gram
-modeling, we've actually already done this for you as an example in
-[models/tutorials/embedding/word2vec.py](https://github.com/tensorflow/models/tree/master/tutorials/embedding/word2vec.py).
+在您对模型结构感到满意后，可能有必要优化您的实现，以提高运行效率，并在更短的时间内涵盖更多数据。例如，我们在本教程中使用的简单代码在速度上会受限，因为我们使用 Python 读取和馈送数据项（在 TensorFlow 后端上，每项操作需要进行的工作都非常少）。如果您发现模型在输入数据方面存在严重瓶颈，您可能需要针对您的问题实现自定义数据读取器，如
+[新数据格式](../../extend/new_data_formats.md)
+中所述。至于 Skip-Gram 建模，我们实际上已经在
+[models/tutorials/embedding/word2vec.py](https://github.com/tensorflow/models/tree/master/tutorials/embedding/word2vec.py) 中提供示例。
 
-If your model is no longer I/O bound but you want still more performance, you
-can take things further by writing your own TensorFlow Ops, as described in
-[Adding a New Op](../../extend/adding_an_op.md).  Again we've provided an
-example of this for the Skip-Gram case
-[models/tutorials/embedding/word2vec_optimized.py](https://github.com/tensorflow/models/tree/master/tutorials/embedding/word2vec_optimized.py).
-Feel free to benchmark these against each other to measure performance
-improvements at each stage.
+如果您的模型不再受 I/O 限制，但您仍希望提高性能，则可以通过编写自己的 TensorFlow 操作（如
+[添加新操作](../../extend/adding_an_op.md)
+中所述）进一步采取措施。同样，我们已在
+[models/tutorials/embedding/word2vec_optimized.py](https://github.com/tensorflow/models/tree/master/tutorials/embedding/word2vec_optimized.py)
+中提供 Skip-Gram 示例。欢迎对它们相互进行基准测试，以衡量它们在各个阶段的性能改善情况。
 
-## Conclusion
+## 总结
 
-In this tutorial we covered the word2vec model, a computationally efficient
-model for learning word embeddings. We motivated why embeddings are useful,
-discussed efficient training techniques and showed how to implement all of this
-in TensorFlow. Overall, we hope that this has show-cased how TensorFlow affords
-you the flexibility you need for early experimentation, and the control you
-later need for bespoke optimized implementation.
+在本教程中，我们介绍了 word2vec 模型，这是一种计算效率很高的模型，用于学习字词嵌入。我们提出了为何嵌入非常有用，讨论了有效的训练技巧，并展示了如何在 TensorFlow 中实现所有这些操作。总而言之，我们希望通过本教程传达以下信息：TensorFlow 可以为您提供早期实验所需的灵活性，以及后期自定义优化实现所需的控制力。
