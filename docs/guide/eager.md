@@ -1,42 +1,29 @@
-# Eager Execution
+#  Eager Execution
 
-TensorFlow's eager execution is an imperative programming environment that
-evaluates operations immediately, without building graphs: operations return
-concrete values instead of constructing a computational graph to run later. This
-makes it easy to get started with TensorFlow and debug models, and it
-reduces boilerplate as well. To follow along with this guide, run the code
-samples below in an interactive `python` interpreter.
+TensorFlow 的 Eager Execution 是一种命令式编程环境，可立即评估操作，无需构建图：操作会返回具体的值，而不是构建以后再运行的计算图。这样能让您轻松地开始使用 TensorFlow 和调试模型，并且还减少了样板代码。要遵循本指南，请在交互式 `python` 解释器中运行下面的代码示例。
 
-Eager execution is a flexible machine learning platform for research and
-experimentation, providing:
+Eager Execution 是一个灵活的机器学习平台，用于研究和实验，可提供：
 
-* *An intuitive interface*—Structure your code naturally and use Python data
-  structures. Quickly iterate on small models and small data.
-* *Easier debugging*—Call ops directly to inspect running models and test
-  changes. Use standard Python debugging tools for immediate error reporting.
-* *Natural control flow*—Use Python control flow instead of graph control
-  flow, simplifying the specification of dynamic models.
+- 直观的界面 - 自然地组织代码结构并使用 Python 数据结构。快速迭代小模型和小型数据集。
+- 更轻松的调试功能 - 直接调用操作以检查正在运行的模型并测试更改。使用标准 Python 调试工具进行即时错误报告。
+- 自然控制流程 - 使用 Python 控制流程而不是图控制流程，简化了动态模型的规范。
 
-Eager execution supports most TensorFlow operations and GPU acceleration. For a
-collection of examples running in eager execution, see:
-[tensorflow/contrib/eager/python/examples](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/eager/python/examples).
+Eager Execution 支持大多数 TensorFlow 操作和 GPU 加速。有关在 Eager Execution 中运行的示例集合，请参阅：
+[tensorflow/contrib/eager/python/examples](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/eager/python/examples)。
 
-Note: Some models may experience increased overhead with eager execution
-enabled. Performance improvements are ongoing, but please
-[file a bug](https://github.com/tensorflow/tensorflow/issues) if you find a
-problem and share your benchmarks.
+注意：如果启用 Eager Execution，某些模型的开销可能会增加。我们正在改进性能；如果发现问题，请
+[报告错误](https://github.com/tensorflow/tensorflow/issues)
+，并分享您的基准测试结果。
 
-## Setup and basic usage
+## 设置和基本用法
 
-Upgrade to the latest version of TensorFlow:
+升级到最新版本的 TensorFlow：
 
 ```
 $ pip install --upgrade tensorflow
 ```
 
-To start eager execution, add `tf.enable_eager_execution()` to the beginning of
-the program or console session. Do not add this operation to other modules that
-the program calls.
+要启动 Eager Execution，请将 `tf.enable_eager_execution()` 添加到程序或控制台会话的开头。不要将此操作添加到程序调用的其他模块。
 
 ```py
 from __future__ import absolute_import, division, print_function
@@ -46,7 +33,7 @@ import tensorflow as tf
 tf.enable_eager_execution()
 ```
 
-Now you can run TensorFlow operations and the results will return immediately:
+现在您可以运行 TensorFlow 操作了，结果将立即返回：
 
 ```py
 tf.executing_eagerly()        # => True
@@ -56,19 +43,12 @@ m = tf.matmul(x, x)
 print("hello, {}".format(m))  # => "hello, [[4.]]"
 ```
 
-Enabling eager execution changes how TensorFlow operations behave—now they
-immediately evaluate and return their values to Python. `tf.Tensor` objects
-reference concrete values instead of symbolic handles to nodes in a computational
-graph. Since there isn't a computational graph to build and run later in a
-session, it's easy to inspect results using `print()` or a debugger. Evaluating,
-printing, and checking tensor values does not break the flow for computing
-gradients.
+启用 Eager Execution 会改变 TensorFlow 操作的行为方式 - 现在它们会立即评估并将值返回给 Python。`tf.Tensor` 对象会引用具体值，而不是指向计算图中的节点的符号句柄。由于不需要构建稍后在会话中运行的计算图，因此使用 `print()` 或调试程序很容易检查结果。评估、输出和检查张量值不会中断计算梯度的流程。
 
-Eager execution works nicely with [NumPy](http://www.numpy.org/). NumPy
-operations accept `tf.Tensor` arguments. TensorFlow
-[math operations](https://www.tensorflow.org/api_guides/python/math_ops) convert
-Python objects and NumPy arrays to `tf.Tensor` objects. The
-`tf.Tensor.numpy` method returns the object's value as a NumPy `ndarray`.
+Eager Execution 适合与 [NumPy](http://www.numpy.org/)
+一起使用。NumPy 操作接受 `tf.Tensor` 参数。TensorFlow
+[数学运算](https://www.tensorflow.org/api_guides/python/math_ops)
+将 Python 对象和 NumPy 数组转换为 `tf.Tensor` 对象。`tf.Tensor.numpy` 方法返回对象的值作为 NumPy `ndarray`。
 
 ```py
 a = tf.constant([[1, 2],
@@ -102,18 +82,15 @@ print(a.numpy())
 #     [3 4]]
 ```
 
-The `tf.contrib.eager` module contains symbols available to both eager and graph execution
-environments and is useful for writing code to [work with graphs](#work_with_graphs):
+`tf.contrib.eager` 模块包含可用于 Eager Execution 和 Graph Execution 环境的符号，对编写[处理图](#work_with_graphs)的代码非常有用：
 
 ```py
 tfe = tf.contrib.eager
 ```
 
-## Dynamic control flow
+## 动态控制流
 
-A major benefit of eager execution is that all the functionality of the host
-language is available while your model is executing. So, for example,
-it is easy to write [fizzbuzz](https://en.wikipedia.org/wiki/Fizz_buzz):
+Eager Execution 的一个主要好处是，在执行模型时，主机语言的所有功能都可用。因此，编写 [fizzbuzz](https://en.wikipedia.org/wiki/Fizz_buzz) 很容易（举例而言）：
 
 ```py
 def fizzbuzz(max_num):
@@ -133,18 +110,13 @@ def fizzbuzz(max_num):
   return counter
 ```
 
-This has conditionals that depend on tensor values and it prints these values
-at runtime.
+这段代码具有依赖于张量值的条件并在运行时输出这些值。
 
-## Build a model
+## 构建模型
 
-Many machine learning models are represented by composing layers. When
-using TensorFlow with eager execution you can either write your own layers or
-use a layer provided in the `tf.keras.layers` package.
+许多机器学习模型通过组合层来表示。将 TensorFlow 与 Eager Execution 结合使用时，您可以编写自己的层或使用在 `tf.keras.layers` 程序包中提供的层。
 
-While you can use any Python object to represent a layer,
-TensorFlow has `tf.keras.layers.Layer` as a convenient base class. Inherit from
-it to implement your own layer:
+虽然您可以使用任何 Python 对象表示层，但 TensorFlow 提供了便利的基类 `tf.keras.layers.Layer`。您可以通过继承它实现自己的层：
 
 ```py
 class MySimpleLayer(tf.keras.layers.Layer):
@@ -166,11 +138,9 @@ class MySimpleLayer(tf.keras.layers.Layer):
     return tf.matmul(input, self.kernel)
 ```
 
-Use `tf.keras.layers.Dense` layer instead  of `MySimpleLayer` above as it has
-a superset of its functionality (it can also add a bias).
+请使用 `tf.keras.layers.Dense` 层（而不是上面的 `MySimpleLayer`），因为它具有其功能的超集（它也可以添加偏差）。
 
-When composing layers into models you can use `tf.keras.Sequential` to represent
-models which are a linear stack of layers. It is easy to use for basic models:
+将层组合成模型时，可以使用 `tf.keras.Sequential` 表示由层线性堆叠的模型。它非常适合用于基本模型：
 
 ```py
 model = tf.keras.Sequential([
@@ -179,9 +149,7 @@ model = tf.keras.Sequential([
 ])
 ```
 
-Alternatively, organize models in classes by inheriting from `tf.keras.Model`.
-This is a container for layers that is a layer itself, allowing `tf.keras.Model`
-objects to contain other `tf.keras.Model` objects.
+或者，通过继承 `tf.keras.Model` 将模型整理为类。这是一个本身也是层的层容器，允许 `tf.keras.Model` 对象包含其他 `tf.keras.Model` 对象。
 
 ```py
 class MNISTModel(tf.keras.Model):
@@ -200,29 +168,20 @@ class MNISTModel(tf.keras.Model):
 model = MNISTModel()
 ```
 
-It's not required to set an input shape for the `tf.keras.Model` class since
-the parameters are set the first time input is passed to the layer.
+因为第一次将输入传递给层时已经设置参数，所以不需要为 `tf.keras.Model` 类设置输入形状。
 
-`tf.keras.layers` classes create and contain their own model variables that
-are tied to the lifetime of their layer objects. To share layer variables, share
-their objects.
+`tf.keras.layers` 类会创建并包含自己的模型变量，这些变量与其层对象的生命周期相关联。要共享层变量，请共享其对象。
 
 
-## Eager training
+## Eager 训练
 
-### Computing gradients
+### 计算梯度
 
-[Automatic differentiation](https://en.wikipedia.org/wiki/Automatic_differentiation)
-is useful for implementing machine learning algorithms such as
-[backpropagation](https://en.wikipedia.org/wiki/Backpropagation) for training
-neural networks. During eager execution, use `tf.GradientTape` to trace
-operations for computing gradients later.
+[自动微分](https://en.wikipedia.org/wiki/Automatic_differentiation)
+对于实现机器学习算法（例如用于训练神经网络的
+[反向传播](https://en.wikipedia.org/wiki/Backpropagation) ）来说很有用。在 Eager Execution 期间，请使用 `tf.GradientTape` 跟踪操作以便稍后计算梯度。
 
-`tf.GradientTape` is an opt-in feature to provide maximal performance when
-not tracing. Since different operations can occur during each call, all
-forward-pass operations get recorded to a "tape". To compute the gradient, play
-the tape backwards and then discard. A particular `tf.GradientTape` can only
-compute one gradient; subsequent calls throw a runtime error.
+`tf.GradientTape` 是一种选择性功能，可在不跟踪时提供最佳性能。由于在每次调用期间都可能发生不同的操作，因此所有前向传播操作都会记录到“磁带”中。要计算梯度，请反向播放磁带，然后放弃。特定的 `tf.GradientTape` 只能计算一个梯度；随后的调用会抛出运行时错误。
 
 ```py
 w = tf.Variable([[1.0]])
@@ -233,8 +192,7 @@ grad = tape.gradient(loss, w)
 print(grad)  # => tf.Tensor([[ 2.]], shape=(1, 1), dtype=float32)
 ```
 
-Here's an example of `tf.GradientTape` that records forward-pass operations
-to train a simple model:
+下面是一个记录前向传播操作以训练简单模型的 `tf.GradientTape` 示例：
 
 ```py
 # A toy dataset of points around 3 * x + 2
@@ -276,7 +234,7 @@ print("Final loss: {:.3f}".format(loss(W, B)))
 print("W = {}, B = {}".format(W.numpy(), B.numpy()))
 ```
 
-Output (exact numbers may vary):
+输出（具体数字可能会有所不同）：
 
 ```
 Initial loss: 71.204
@@ -294,10 +252,9 @@ Final loss: 0.974
 W = 3.01582956314, B = 2.1191945076
 ```
 
-Replay the `tf.GradientTape` to compute the gradients and apply them in a
-training loop. This is demonstrated in an excerpt from the
+重播 `tf.GradientTape` 以计算梯度并将梯度应用于训练循环中。下面是来自 
 [mnist_eager.py](https://github.com/tensorflow/models/blob/master/official/mnist/mnist_eager.py)
-example:
+示例的摘录：
 
 ```py
 dataset = tf.data.Dataset.from_tensor_slices((data.train.images,
@@ -315,13 +272,11 @@ for (batch, (images, labels)) in enumerate(dataset):
 ```
 
 
-The following example creates a multi-layer model that classifies the standard
-MNIST handwritten digits. It demonstrates the optimizer and layer APIs to build
-trainable graphs in an eager execution environment.
+以下示例将创建一个多层模型，该模型会对标准 MNIST 手写数字进行分类。它演示了在 Eager Execution 环境中构建可训练图的优化器和层 API。
 
-### Train a model
+### 训练模型
 
-Even without training, call the model and inspect the output in eager execution:
+即使没有训练，也可以在 Eager Execution 中调用模型并检查输出：
 
 ```py
 # Create a tensor representing a blank image
@@ -332,21 +287,18 @@ result = model(batch)
 # => tf.Tensor([[[ 0.  0., ..., 0.]]], shape=(1, 1, 10), dtype=float32)
 ```
 
-This example uses the
-[dataset.py module](https://github.com/tensorflow/models/blob/master/official/mnist/dataset.py)
-from the
-[TensorFlow MNIST example](https://github.com/tensorflow/models/tree/master/official/mnist);
-download this file to your local directory. Run the following to download the
-MNIST data files to your working directory and prepare a `tf.data.Dataset`
-for training:
+该示例使用了
+[TensorFlow MNIST 示例](https://github.com/tensorflow/models/tree/master/official/mnist)
+中的
+[dataset.py 模块](https://github.com/tensorflow/models/blob/master/official/mnist/dataset.py)
+，请将该文件下载到本地目录。运行以下命令以将 MNIST 数据文件下载到工作目录并准备要进行训练的 `tf.data.Dataset`：
 
 ```py
 import dataset  # download dataset.py file
 dataset_train = dataset.train('./datasets').shuffle(60000).repeat(4).batch(32)
 ```
 
-To train a model, define a loss function to optimize and then calculate
-gradients. Use an optimizer to update the variables:
+为了训练模型，请定义损失函数以进行优化，然后计算梯度。使用优化器更新变量：
 
 ```py
 def loss(model, x, y):
@@ -376,7 +328,7 @@ for (i, (x, y)) in enumerate(dataset_train):
 print("Final loss: {:.3f}".format(loss(model, x, y)))
 ```
 
-Output (exact numbers may vary):
+输出（具体数字可能会有所不同）：
 
 ```
 Initial loss: 2.674
@@ -395,7 +347,7 @@ Loss at step 7400: 0.681
 Final loss: 0.670
 ```
 
-And for faster training, move the computation to a GPU:
+为了加速训练，可以将计算移至 GPU：
 
 ```py
 with tf.device("/gpu:0"):
@@ -405,15 +357,11 @@ with tf.device("/gpu:0"):
                        global_step=tf.train.get_or_create_global_step())
 ```
 
-### Variables and optimizers
+### 变量和优化器
 
-`tf.Variable` objects store mutable `tf.Tensor` values accessed during
-training to make automatic differentiation easier. The parameters of a model can
-be encapsulated in classes as variables.
+`tfe.Variable` 对象会存储在训练期间访问的可变 `tf.Tensor` 值，以更加轻松地实现自动微分。模型的参数可以作为变量封装在类中。
 
-Better encapsulate model parameters by using `tf.Variable` with
-`tf.GradientTape`. For example, the automatic differentiation example above
-can be rewritten:
+通过将 `tfe.Variable` 与 `tf.GradientTape` 结合使用可以更好地封装模型参数。例如，上面的自动微分示例可以重写为：
 
 ```py
 class Model(tf.keras.Model):
@@ -461,7 +409,7 @@ print("Final loss: {:.3f}".format(loss(model, training_inputs, training_outputs)
 print("W = {}, B = {}".format(model.W.numpy(), model.B.numpy()))
 ```
 
-Output (exact numbers may vary):
+输出（具体数字可能会有所不同）：
 
 ```
 Initial loss: 69.066
@@ -484,17 +432,13 @@ Final loss: 0.996
 W = 2.99431324005, B = 2.02129220963
 ```
 
-## Use objects for state during eager execution
+## 在 Eager Execution 期间将对象用于状态
 
-With graph execution, program state (such as the variables) is stored in global
-collections and their lifetime is managed by the `tf.Session` object. In
-contrast, during eager execution the lifetime of state objects is determined by
-the lifetime of their corresponding Python object.
+使用 Graph Execution 时，程序状态（如变量）存储在全局集合中，它们的生命周期由 `tf.Session` 对象管理。相反，在 Eager Execution 期间，状态对象的生命周期由其对应的 Python 对象的生命周期决定。
 
-### Variables are objects
+### 变量是对象
 
-During eager execution, variables persist until the last reference to the object
-is removed, and is then deleted.
+在 Eager Execution 期间，变量会一直存在，直到相应对象的最后一个引用被移除，然后变量被删除。
 
 ```py
 with tf.device("gpu:0"):
@@ -502,10 +446,9 @@ with tf.device("gpu:0"):
   v = None  # v no longer takes up GPU memory
 ```
 
-### Object-based saving
+### 基于对象的保存
 
-`tf.train.Checkpoint` can save and restore `tf.Variable`s to and from
-checkpoints:
+`tfe.Checkpoint` 可以将 `tfe.Variable` 保存到检查点并从中恢复：
 
 ```py
 x = tf.Variable(10.)
@@ -523,9 +466,7 @@ checkpoint.restore(save_path)
 print(x)  # => 2.0
 ```
 
-To save and load models, `tf.train.Checkpoint` stores the internal state of objects,
-without requiring hidden variables. To record the state of a `model`,
-an `optimizer`, and a global step, pass them to a `tf.train.Checkpoint`:
+要保存和加载模型，`tfe.Checkpoint` 会存储对象的内部状态，而不需要隐藏变量。要记录 `model`、`optimizer` 和全局步的状态，请将它们传递到 `tfe.Checkpoint`：
 
 ```py
 model = MyModel()
@@ -541,11 +482,9 @@ root.save(file_prefix=checkpoint_prefix)
 root.restore(tf.train.latest_checkpoint(checkpoint_dir))
 ```
 
-### Object-oriented metrics
+### 面向对象的指标
 
-`tfe.metrics` are stored as objects. Update a metric by passing the new data to
-the callable, and retrieve the result using the `tfe.metrics.result` method,
-for example:
+`tfe.metrics` 存储为对象。通过将新数据传递给可调用对象来更新指标，并使用 `tfe.metrics.result` 方法检索结果，例如：
 
 ```py
 m = tfe.metrics.Mean("loss")
@@ -556,16 +495,11 @@ m([8, 9])
 m.result()  # => 5.5
 ```
 
-#### Summaries and TensorBoard
+#### 汇总和 TensorBoard
 
-[TensorBoard](../guide/summaries_and_tensorboard.md) is a visualization tool for
-understanding, debugging and optimizing the model training process. It uses
-summary events that are written while executing the program.
+[TensorBoard](/docs/tensorflow/guide/summaries_and_tensorboard) 是一种可视化工具，用于了解、调试和优化模型训练过程。它使用在执行程序时编写的汇总事件。
 
-`tf.contrib.summary` is compatible with both eager and graph execution
-environments. Summary operations, such as `tf.contrib.summary.scalar`, are
-inserted during model construction. For example, to record summaries once every
-100 global steps:
+`tf.contrib.summary` 与 Eager Execution 和 Graph Execution 环境兼容。汇总操作（如 `tf.contrib.summary.scalar`）在模型构建期间被插入。例如，要每 100 个全局步记录一次汇总：
 
 ```py
 global_step = tf.train.get_or_create_global_step()
@@ -581,14 +515,13 @@ for _ in range(iterations):
      ...
 ```
 
-## Advanced automatic differentiation topics
+## 自动微分高级内容
 
-### Dynamic models
+### 动态模型
 
-`tf.GradientTape` can also be used in dynamic models. This example for a
-[backtracking line search](https://wikipedia.org/wiki/Backtracking_line_search)
-algorithm looks like normal NumPy code, except there are gradients and is
-differentiable, despite the complex control flow:
+`tf.GradientTape` 也可用于动态模型。这个
+[回溯线搜索](https://wikipedia.org/wiki/Backtracking_line_search)
+算法示例看起来像普通的 NumPy 代码，除了存在梯度并且可微分，尽管控制流比较复杂：
 
 ```py
 def line_search_step(fn, init_x, rate=1.0):
@@ -606,29 +539,14 @@ def line_search_step(fn, init_x, rate=1.0):
   return x, value
 ```
 
-### Additional functions to compute gradients
+### 计算梯度的其他函数
 
-`tf.GradientTape` is a powerful interface for computing gradients, but there
-is another [Autograd](https://github.com/HIPS/autograd)-style API available for
-automatic differentiation. These functions are useful if writing math code with
-only tensors and gradient functions, and without `tf.Variables`:
+`tf.GradientTape` 是用于计算梯度的强大接口，还有另一种 [Autograd](https://github.com/HIPS/autograd)样式的 API 可用于自动微分。如果只用张量和梯度函数编写数学代码，而不使用 `tfe.Variables`，则这些函数非常有用：
 
-* `tfe.gradients_function` —Returns a function that computes the derivatives
-  of its input function parameter with respect to its arguments. The input
-  function parameter must return a scalar value. When the returned function is
-  invoked, it returns a list of `tf.Tensor` objects: one element for each
-  argument of the input function. Since anything of interest must be passed as a
-  function parameter, this becomes unwieldy if there's a dependency on many
-  trainable parameters.
-* `tfe.value_and_gradients_function` —Similar to
-  `tfe.gradients_function`, but when the returned function is invoked, it
-  returns the value from the input function in addition to the list of
-  derivatives of the input function with respect to its arguments.
+- `tfe.gradients_function` - 返回一个函数，该函数会计算其输入函数参数相对于其参数的导数。输入函数参数必须返回一个标量值。当返回的函数被调用时，它会返回一个 `tf.Tensor` 对象列表：输入函数的每个参数各对应一个元素。因为任何相关信息都必须作为函数参数传递，所以如果依赖于许多可训练参数，则会变得很难处理。
+- `tfe.value_and_gradients_function` - 与 `tfe.gradients_function` 相似，但是当返回的函数被调用时，除了输入函数相对于其参数的导数列表之外，它还会返回输入函数的值。
 
-In the following example, `tfe.gradients_function` takes the `square`
-function as an argument and returns a function that computes the partial
-derivatives of `square` with respect to its inputs. To calculate the derivative
-of `square` at `3`, `grad(3.0)` returns `6`.
+在以下示例中，`tfe.gradients_function` 将 `square` 函数作为参数，并返回一个函数（计算 `square` 相对于其输入的偏导数）。如果计算输入为 `3` 时 `square` 的偏导数，`grad(3.0)` 会返回 `6`。
 
 ```py
 def square(x):
@@ -658,12 +576,9 @@ grad(3.)   # => [1.0]
 grad(-3.)  # => [-1.0]
 ```
 
-### Custom gradients
+### 自定义梯度
 
-Custom gradients are an easy way to override gradients in eager and graph
-execution. Within the forward function, define the gradient with respect to the
-inputs, outputs, or intermediate results. For example, here's an easy way to clip
-the norm of the gradients in the backward pass:
+自定义梯度是在 Eager Execution 和 Graph Execution 中覆盖梯度的一种简单方式。在正向函数中，定义相对于输入、输出或中间结果的梯度。例如，下面是在反向传播中截断梯度范数的一种简单方式：
 
 ```py
 @tf.custom_gradient
@@ -674,8 +589,7 @@ def clip_gradient_by_norm(x, norm):
   return y, grad_fn
 ```
 
-Custom gradients are commonly used to provide a numerically stable gradient for a
-sequence of operations:
+自定义梯度通常用于为一系列操作提供数值稳定的梯度：
 
 ```py
 def log1pexp(x):
@@ -689,10 +603,7 @@ grad_log1pexp(0.)  # => [0.5]
 grad_log1pexp(100.)  # => [nan]
 ```
 
-Here, the `log1pexp` function can be analytically simplified with a custom
-gradient. The implementation below reuses the value for `tf.exp(x)` that is
-computed during the forward pass—making it more efficient by eliminating
-redundant calculations:
+在此处，`log1pexp` 函数可以通过自定义梯度进行分析简化。下面的实现重用了在前向传播期间计算的 `tf.exp(x)` 的值，通过消除冗余计算，变得更加高效：
 
 ```py
 @tf.custom_gradient
@@ -711,11 +622,9 @@ grad_log1pexp(0.)  # => [0.5]
 grad_log1pexp(100.)  # => [1.0]
 ```
 
-## Performance
+## 性能
 
-Computation is automatically offloaded to GPUs during eager execution. If you
-want control over where a computation runs you can enclose it in a
-`tf.device('/gpu:0')` block (or the CPU equivalent):
+在 Eager Execution 期间，计算会自动分流到 GPU。如果要控制计算运行的位置，可以将其放在 `tf.device('/gpu:0')` 块（或 CPU 等效块）中：
 
 ```py
 import time
@@ -752,7 +661,7 @@ else:
   print("GPU: not found")
 ```
 
-Output (exact numbers depend on hardware):
+输出（确切数字取决于硬件）：
 
 ```
 Time to multiply a (1000, 1000) matrix by itself 200 times:
@@ -760,8 +669,7 @@ CPU: 1.46628093719 secs
 GPU: 0.0593810081482 secs
 ```
 
-A `tf.Tensor` object can be copied to a different device to execute its
-operations:
+`tf.Tensor` 对象可以被复制到不同的设备来执行其操作：
 
 ```py
 x = tf.random_normal([10, 10])
@@ -777,68 +685,47 @@ if tfe.num_gpus() > 1:
   _ = tf.matmul(x_gpu1, x_gpu1)  # Runs on GPU:1
 ```
 
-### Benchmarks
+### 基准
 
-For compute-heavy models, such as
+对于计算量繁重的模型（如在 GPU 上训练的
 [ResNet50](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/eager/python/examples/resnet50)
-training on a GPU, eager execution performance is comparable to graph execution.
-But this gap grows larger for models with less computation and there is work to
-be done for optimizing hot code paths for models with lots of small operations.
+），Eager Execution 性能与 Graph Execution 相当。但是对于计算量较小的模型来说，这种性能差距会越来越大，并且有很多工作要做，以便为具有大量小操作的模型优化热代码路径。
 
 
-## Work with graphs
+## 处理图
 
-While eager execution makes development and debugging more interactive,
-TensorFlow graph execution has advantages for distributed training, performance
-optimizations, and production deployment. However, writing graph code can feel
-different than writing regular Python code and more difficult to debug.
+虽然 Eager Execution 增强了开发和调试的交互性，但 TensorFlow Graph Execution 在分布式训练、性能优化和生产部署方面具有优势。不过，编写图形代码不同于编写常规 Python 代码，并且更难以调试。
 
-For building and training graph-constructed models, the Python program first
-builds a graph representing the computation, then invokes `Session.run` to send
-the graph for execution on the C++-based runtime.  This provides:
+为了构建和训练由图构建的模型，Python 程序首先构建一个表示计算的图，然后调用 `Session.run` 来发送该图，以便在基于 C++ 的运行时上执行。这种方式具有以下优势：
 
-* Automatic differentiation using static autodiff.
-* Simple deployment to a platform independent server.
-* Graph-based optimizations (common subexpression elimination, constant-folding, etc.).
-* Compilation and kernel fusion.
-* Automatic distribution and replication (placing nodes on the distributed system).
+- 使用静态 `autodiff` 进行自动微分。
+- 可轻松地部署到独立于平台的服务器。
+- 基于图的优化（常见的子表达式消除、常量折叠等）。
+- 编译和内核融合。
+- 自动分发和复制（在分布式系统上放置节点）。
 
-Deploying code written for eager execution is more difficult: either generate a
-graph from the model, or run the Python runtime and code directly on the server.
+部署为 Eager Execution 编写的代码更加困难：要么从模型生成图，要么直接在服务器上运行 Python 运行时和代码。
 
-### Write compatible code
+### 编写兼容的代码
 
-The same code written for eager execution will also build a graph during graph
-execution. Do this by simply running the same code in a new Python session where
-eager execution is not enabled.
+为 Eager Execution 编写的相同代码在 Graph Execution 期间也会构建图。在未启用 Eager Execution 的新 Python 会话中运行相同的代码便可实现此目的。
 
-Most TensorFlow operations work during eager execution, but there are some things
-to keep in mind:
+大多数 TensorFlow 操作在 Eager Execution 期间都有效，但需要注意以下几点：
 
-* Use `tf.data` for input processing instead of queues. It's faster and easier.
-* Use object-oriented layer APIs—like `tf.keras.layers` and
-  `tf.keras.Model`—since they have explicit storage for variables.
-* Most model code works the same during eager and graph execution, but there are
-  exceptions. (For example, dynamic models using Python control flow to change the
-  computation based on inputs.)
-* Once eager execution is enabled with `tf.enable_eager_execution`, it
-  cannot be turned off. Start a new Python session to return to graph execution.
+- 使用 `tf.data`（而不是队列）进行输入处理，速度更快、更简单。
+- 使用面向对象的层 API，如 `tf.keras.layers` 和 `tf.keras.Model`，因为它们有明确的变量存储空间。
+- 大多数模型代码在 Eager Execution 和 Graph Execution 过程中效果一样，但也有例外情况。（例如，使用 Python 控制流更改基于输入的计算的动态模型。）
+- 一旦通过 `tf.enable_eager_execution` 启用了 Eager Execution，就不能将其关闭。要返回到 Graph Execution，需要启动一个新的 Python 会话。
 
-It's best to write code for both eager execution *and* graph execution. This
-gives you eager's interactive experimentation and debuggability with the
-distributed performance benefits of graph execution.
+最好同时为 Eager Execution 和 Graph Execution 编写代码。这样，既可以获得 Eager Execution 的交互式实验和可调试性功能，又能拥有 Graph Execution 的分布式性能优势。
 
-Write, debug, and iterate in eager execution, then import the model graph for
-production deployment. Use `tf.train.Checkpoint` to save and restore model
-variables, this allows movement between eager and graph execution environments.
-See the examples in:
-[tensorflow/contrib/eager/python/examples](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/eager/python/examples).
+在 Eager Execution 中编写、调试和迭代代码，然后导入模型图用于生产部署。使用 `tfe.Checkpoint` 保存和恢复模型变量，这样可在 Eager Execution 和 Graph Execution 环境之间移动模型。请参阅
+[tensorflow/contrib/eager/python/examples](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/eager/python/examples)
+中的示例。
 
-### Use eager execution in a graph environment
+### 在图环境中使用 Eager Execution
 
-Selectively enable eager execution in a TensorFlow graph environment using
-`tfe.py_func`. This is used when `tf.enable_eager_execution()` has *not*
-been called.
+使用 `tfe.py_func` 在 TensorFlow 图环境中选择性地启用 Eager Execution。在未调用 `tf.enable_eager_execution()` 的情况下使用这种方法。
 
 ```py
 def my_py_func(x):
