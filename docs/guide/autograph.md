@@ -12,7 +12,7 @@
   </td>
 </table>
 
-[AutoGraph](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/autograph/)可帮助您使用普通 Python 编写复杂的图代码。AutoGraph 会在后台自动将您的代码转换为等效的 [TensorFlow 图代码](/docs/tensorflow//guide/graphs)。AutoGraph 已经支持大部分 Python 语言，而且覆盖范围在不断扩大。如需所支持 Python 语言功能的列表，请参阅 [Autograph 功能与限制](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/autograph/LIMITATIONS.md).
+[AutoGraph](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/autograph/)可帮助您使用普通 Python 编写复杂的图代码。AutoGraph 会在后台自动将您的代码转换为等效的 [TensorFlow 图代码](/docs/tensorflow//guide/graphs)。AutoGraph 已经支持大部分 Python 语言，而且覆盖范围在不断扩大。如需所支持 Python 语言功能的列表，请参阅 [Autograph 功能与限制](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/autograph/LIMITATIONS.md)。
 
 ## 设置
 
