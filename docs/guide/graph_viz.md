@@ -103,15 +103,15 @@ with tf.name_scope('hidden') as scope:
 
 Symbol | Meaning
 --- | ---
-![Name scope](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/namespace_node.png "Name scope") | *High-level* node representing a name scope. Double-click to expand a high-level node.
-![Sequence of unconnected nodes](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/horizontal_stack.png "Sequence of unconnected nodes") | Sequence of numbered nodes that are not connected to each other.
-![Sequence of connected nodes](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/vertical_stack.png "Sequence of connected nodes") | Sequence of numbered nodes that are connected to each other.
-![Operation node](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/op_node.png "Operation node") | An individual operation node.
-![Constant node](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/constant.png "Constant node") | A constant.
-![Summary node](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/summary.png "Summary node") | A summary node.
-![Data flow edge](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/dataflow_edge.png "Data flow edge") | Edge showing the data flow between operations.
-![Control dependency edge](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/control_edge.png "Control dependency edge") | Edge showing the control dependency between operations.
-![Reference edge](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/reference_edge.png "Reference edge") | A reference edge showing that the outgoing operation node can mutate the incoming tensor.
+![Name scope](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/namespace_node.png "Name scope") | 代表名称范围的高级别节点。双击可展开高级别节点。
+![Sequence of unconnected nodes](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/horizontal_stack.png "Sequence of unconnected nodes") | 未相互连接的编号节点的序列。
+![Sequence of connected nodes](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/vertical_stack.png "Sequence of connected nodes") | 相互连接的编号节点的序列。
+![Operation node](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/op_node.png "Operation node") | 单个指令节点。
+![Constant node](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/constant.png "Constant node") | 常量。
+![Summary node](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/summary.png "Summary node") | 总结节点。
+![Data flow edge](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/dataflow_edge.png "Data flow edge") | 显示指令之间的数据流的边缘。
+![Control dependency edge](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/control_edge.png "Control dependency edge") | 显示指令之间的控制依赖关系的边缘。
+![Reference edge](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/reference_edge.png "Reference edge") | 表明传出指令节点可以使传入张量发生变化的参考边缘。
 
 ## 交互 {#interaction}
 
