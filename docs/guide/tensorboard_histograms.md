@@ -1,24 +1,13 @@
-# TensorBoard Histogram Dashboard
+#  TensorBoard 直方图信息中心
 
-The TensorBoard Histogram Dashboard displays how the distribution of some
-`Tensor` in your TensorFlow graph has changed over time. It does this by showing
-many histograms visualizations of your tensor at different points in time.
+TensorBoard 直方图信息中心用于显示在 TensorFlow 图中某些 `Tensor` 随着时间推移而变化的分布。即，该信息中心可显示在不同时间点对应张量的许多张直方图图示。
 
-## A Basic Example
+## 基本示例
 
-Let's start with a simple case: a normally-distributed variable, where the mean
-shifts over time.
-TensorFlow has an op
-[`tf.random_normal`](https://www.tensorflow.org/api_docs/python/tf/random_normal)
-which is perfect for this purpose. As is usually the case with TensorBoard, we
-will ingest data using a summary op; in this case,
-['tf.summary.histogram'](https://www.tensorflow.org/api_docs/python/tf/summary/histogram).
-For a primer on how summaries work, please see the
-[TensorBoard guide](./summaries_and_tensorboard.md).
+让我们从一个简单的例子切入：某个正态分布变量，其平均值随着时间推移而变化。TensorFlow 中的操作 `tf.random_normal` 可完美实现此目的。按照 TensorBoard 中的常用做法，我们将使用汇总操作（本示例中为 `tf.summary.histogram`）提取数据。要大致了解汇总方式的工作原理，请参阅
+[TensorBoard 指南](/docs/tensorflow/guide/summaries_and_tensorboard).
 
-Here is a code snippet that will generate some histogram summaries containing
-normally distributed data, where the mean of the distribution increases over
-time.
+以下代码段将生成一些包含正态分布数据的直方图汇总，其中该分布的均值将随着时间的推移而增大。
 
 ```python
 import tensorflow as tf
@@ -44,88 +33,53 @@ for step in range(N):
   writer.add_summary(summ, global_step=step)
 ```
 
-Once that code runs, we can load the data into TensorBoard via the command line:
+运行代码后，我们可以通过以下命令行将数据加载到 TensorBoard 中：
 
 
 ```sh
 tensorboard --logdir=/tmp/histogram_example
 ```
 
-Once TensorBoard is running, load it in Chrome or Firefox and navigate to the
-Histogram Dashboard. Then we can see a histogram visualization for our normally
-distributed data.
+TensorBoard 运行时，在 Chrome 或 Firefox 加载该数据，并导航到直方图信息中心。然后我们可以即可看到正态分布数据的直方图图示。
 
-![](https://www.tensorflow.org/images/tensorboard/histogram_dashboard/1_moving_mean.png)
+![](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tensorboard/histogram_dashboard/1_moving_mean.png)
 
-`tf.summary.histogram` takes an arbitrarily sized and shaped Tensor, and
-compresses it into a histogram data structure consisting of many bins with
-widths and counts. For example, let's say we want to organize the numbers
-`[0.5, 1.1, 1.3, 2.2, 2.9, 2.99]` into bins. We could make three bins:
-* a bin
-containing everything from 0 to 1 (it would contain one element, 0.5),
-* a bin
-containing everything from 1-2 (it would contain two elements, 1.1 and 1.3),
-* a bin containing everything from 2-3 (it would contain three elements: 2.2,
-2.9 and 2.99).
+`tf.summary.histogram` 接受任意大小和形状的张量，并将该张量压缩成一个由许多分箱组成的直方图数据结构，这些分箱有各种宽度和计数。例如，假设我们要将数字 `[0.5, 1.1, 1.3, 2.2, 2.9, 2.99]` 整理到不同的分箱中，我们可以创建三个分箱： * 一个分箱包含 0 到 1 之间的所有数字（会包含一个元素：0.5）， * 一个分箱包含 1 到 2 之间的所有数字（会包含两个元素：1.1 和 1.3）， * 一个分箱包含 2 到 3 之间的所有数字（会包含三个元素：2.2、2.9 和 2.99）。
 
-TensorFlow uses a similar approach to create bins, but unlike in our example, it
-doesn't create integer bins. For large, sparse datasets, that might result in
-many thousands of bins.
-Instead, [the bins are exponentially distributed, with many bins close to 0 and
-comparatively few bins for very large numbers.](https://github.com/tensorflow/tensorflow/blob/c8b59c046895fa5b6d79f73e0b5817330fcfbfc1/tensorflow/core/lib/histogram/histogram.cc#L28)
-However, visualizing exponentially-distributed bins is tricky; if height is used
-to encode count, then wider bins take more space, even if they have the same
-number of elements. Conversely, encoding count in the area makes height
-comparisons impossible. Instead, the histograms [resample the data](https://github.com/tensorflow/tensorflow/blob/17c47804b86e340203d451125a721310033710f1/tensorflow/tensorboard/components/tf_backend/backend.ts#L400)
-into uniform bins. This can lead to unfortunate artifacts in some cases.
+TensorFlow 使用类似的方法创建分箱，但与我们的示例不同，它不创建整数分箱。对于大型稀疏数据集，可能会导致数千个分箱。相反，
+[这些分箱呈指数分布，许多分箱接近 0，有较少的分箱的数值较大](https://github.com/tensorflow/tensorflow/blob/c8b59c046895fa5b6d79f73e0b5817330fcfbfc1/tensorflow/core/lib/histogram/histogram.cc#L28)。
+然而，将指数分布的分箱可视化是非常艰难的。如果将高度用于为计数编码，那么即使元素数量相同，较宽的分箱所占的空间也越大。反过来推理，如果用面积为计数编码，则使高度无法比较。因此，直方图会
+[将数据重新采样](https://github.com/tensorflow/tensorflow/blob/17c47804b86e340203d451125a721310033710f1/tensorflow/tensorboard/components/tf_backend/backend.ts#L400)
+并分配到统一的分箱。很不幸，在某些情况下，这可能会造成假象。
 
-Each slice in the histogram visualizer displays a single histogram.
-The slices are organized by step;
-older slices (e.g. step 0) are further "back" and darker, while newer slices
-(e.g. step 400) are close to the foreground, and lighter in color.
-The y-axis on the right shows the step number.
+直方图可视化工具中的每个切片显示单个直方图。切片是按步骤整理的；较早的切片（如，步骤 0）位于较“靠后”的位置，颜色也较深，而较晚的切片（如，步骤 400）则靠近前景，颜色也较浅。右侧的 y 轴显示步骤编号。
 
-You can mouse over the histogram to see tooltips with some more detailed
-information. For example, in the following image we can see that the histogram
-at timestep 176 has a bin centered at 2.25 with 177 elements in that bin.
+您可以将鼠标悬停在直方图上以查看包含更多详细信息的工具提示。例如，在下面的图片中，我们可以看到，时间步骤 176 对应的直方图的分箱位于 2.25 附近，分箱中有 177 个元素。
 
-![](https://www.tensorflow.org/images/tensorboard/histogram_dashboard/2_moving_mean_tooltip.png)
+![](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tensorboard/histogram_dashboard/2_moving_mean_tooltip.png)
 
-Also, you may note that the histogram slices are not always evenly spaced in
-step count or time. This is because TensorBoard uses
-[reservoir sampling](https://en.wikipedia.org/wiki/Reservoir_sampling) to keep a
-subset of all the histograms, to save on memory. Reservoir sampling guarantees
-that every sample has an equal likelihood of being included, but because it is
-a randomized algorithm, the samples chosen don't occur at even steps.
+另外，您可能会注意到，直方图切片并不总是按步数或时间间隔均匀分布。这是因为 TensorBoard 使用
+[蓄水池抽样](https://en.wikipedia.org/wiki/Reservoir_sampling) 
+来保留所有直方图的子集，以节省内存。蓄水池抽样保证每个样本都有相同的被包含的可能性，但是因为它是一个随机算法，选择的样本不会按步数均匀出现。
 
-## Overlay Mode
+## 覆盖模式
 
-There is a control on the left of the dashboard that allows you to toggle the
-histogram mode from "offset" to "overlay":
+信息中心左侧有一个控件，可以将直方图模式从“偏移”切换到“覆盖”：
 
-![](https://www.tensorflow.org/images/tensorboard/histogram_dashboard/3_overlay_offset.png)
+![](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tensorboard/histogram_dashboard/3_overlay_offset.png)
 
-In "offset" mode, the visualization rotates 45 degrees, so that the individual
-histogram slices are no longer spread out in time, but instead are all plotted
-on the same y-axis.
+在“偏移”模式下，可视化旋转 45 度，以便各个直方图切片不再按时间展开，而是全部绘制在相同的 y 轴上。
 
-![](https://www.tensorflow.org/images/tensorboard/histogram_dashboard/4_overlay.png)
-Now, each slice is a separate line on the chart, and the y-axis shows the item
-count within each bucket. Darker lines are older, earlier steps, and lighter
-lines are more recent, later steps. Once again, you can mouse over the chart to
-see some additional information.
+![](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tensorboard/histogram_dashboard/4_overlay.png)
+现在，每个切片都是图表上的一条单独线条，y 轴显示的是每个分箱内的项目数。颜色较深的线条表示较早的步，而颜色较浅的线条表示较晚的步。同样，您可以将鼠标悬停在图表上以查看其他一些信息。
 
-![](https://www.tensorflow.org/images/tensorboard/histogram_dashboard/5_overlay_tooltips.png)
+![](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tensorboard/histogram_dashboard/5_overlay_tooltips.png)
 
-In general, the overlay visualization is useful if you want to directly compare
-the counts of different histograms.
+一般来说，如果要直接比较不同直方图的计数，重叠式可视化图表将非常有用。
 
-## Multimodal Distributions
+## 多峰分布
 
-The Histogram Dashboard is great for visualizing multimodal
-distributions. Let's construct a simple bimodal distribution by concatenating
-the outputs from two different normal distributions. The code will look like
-this:
+直方图信息中心非常适合可视化多峰分布。我们通过合并两个不同正态分布的输出构造一个简单的双峰分布。代码如下所示：
 
 ```python
 import tensorflow as tf
@@ -161,19 +115,15 @@ for step in range(N):
   writer.add_summary(summ, global_step=step)
 ```
 
-You already remember our "moving mean" normal distribution from the example
-above. Now we also have a "shrinking variance" distribution. Side-by-side, they
-look like this:
-![](https://www.tensorflow.org/images/tensorboard/histogram_dashboard/6_two_distributions.png)
+你已经在上面的例子中见过“均值变动”的正态分布。现在还有一个“缩小方差”分布。并排显示如下：
+![](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tensorboard/histogram_dashboard/6_two_distributions.png)
 
-When we concatenate them, we get a chart that clearly reveals the divergent,
-bimodal structure:
-![](https://www.tensorflow.org/images/tensorboard/histogram_dashboard/7_bimodal.png)
+当我们合并这两个分布后，获得一张清晰地显示发散、双峰结构的图表：
+![](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tensorboard/histogram_dashboard/7_bimodal.png)
 
-## Some more distributions
+## 更多分布
 
-Just for fun, let's generate and visualize a few more distributions, and then
-combine them all into one chart. Here's the code we'll use:
+为了增添乐趣，我们来生成并可视化更多的分布图，然后将它们合并到一个图表中。以下是我们要使用的代码：
 
 ```python
 import tensorflow as tf
@@ -226,20 +176,17 @@ for step in range(N):
   summ = sess.run(summaries, feed_dict={k: k_val})
   writer.add_summary(summ, global_step=step)
 ```
-### Gamma Distribution
-![](https://www.tensorflow.org/images/tensorboard/histogram_dashboard/8_gamma.png)
+### 伽玛分布
+![](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tensorboard/histogram_dashboard/8_gamma.png)
 
-### Uniform Distribution
-![](https://www.tensorflow.org/images/tensorboard/histogram_dashboard/9_uniform.png)
+### 均匀分布
+![](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tensorboard/histogram_dashboard/9_uniform.png)
 
-### Poisson Distribution
-![](https://www.tensorflow.org/images/tensorboard/histogram_dashboard/10_poisson.png)
-The poisson distribution is defined over the integers. So, all of the values
-being generated are perfect integers. The histogram compression moves the data
-into floating-point bins, causing the visualization to show little
-bumps over the integer values rather than perfect spikes.
+### 泊松分布
+![](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tensorboard/histogram_dashboard/10_poisson.png)
+泊松分布以整数为基础。所以，所有生成的值都完全是整数。直方图压缩将数据移动到按浮点数划分的分箱中，导致生成的图表在整数值上显示出很小的隆起，而不是锐利的尖峰。
 
-### All Together Now
-Finally, we can concatenate all of the data into one funny-looking curve.
-![](https://www.tensorflow.org/images/tensorboard/histogram_dashboard/11_all_combined.png)
+### 全合并到一起
+最后，我们可以将所有数据合并成一个有趣的曲线图。
+![](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tensorboard/histogram_dashboard/11_all_combined.png)
 
