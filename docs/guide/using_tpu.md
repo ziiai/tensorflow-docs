@@ -140,7 +140,7 @@ my_tpu_estimator = tf.contrib.tpu.TPUEstimator(
 ### 静态形状
 
 在常规使用期间，TensorFlow 会在图的构建过程中尝试确定各个 tf.Tensor 的形状。在执行期间，任何未知形状的维度都是动态确定的。请参阅
- [Tensor 形状](/docs/tensorflow/guide/tensors.md#shape) 了解详情。
+ [Tensor 形状](/docs/tensorflow/guide/tensors#shape) 了解详情。
 
 要在 Cloud TPU 上运行，TensorFlow 模型需使用 [XLA](/docs/tensorflow/performance/xla/index)
 进行编译。XLA 在编译时会使用类似系统来确定形状。XLA 要求在编译时静态确定所有张量维度。所有形状都必须是常量，且不依赖于外部数据或有状态的操作（如变量或随机数生成器）。
@@ -272,7 +272,7 @@ TensorShape([Dimension(None), Dimension(None), Dimension(None)])
 
 小数据集可使用 `tf.data.Dataset.cache` 完全加载到内存中。
 
-无论使用何种数据格式，我们强烈建议您[使用大文件](/docs/tensorflow/performance/performance_guide.md#use_large_files)（约 100MB）。这在网络化设置中尤其重要，因为打开文件的开销要大很多。
+无论使用何种数据格式，我们强烈建议您[使用大文件](/docs/tensorflow/performance/performance_guide#use_large_files)（约 100MB）。这在网络化设置中尤其重要，因为打开文件的开销要大很多。
 
 无论使用哪种读取器，使用构造函数的 `buffer_size` 参数启用缓存也十分重要。该参数按字节指定。建议使用至少几 MB (`buffer_size=8*1024*1024`)，以便在需要时提供数据。
 
