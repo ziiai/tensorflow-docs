@@ -1,24 +1,4 @@
-
-##### Copyright 2018 The TensorFlow Authors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-
-
-```
-#@title Licensed under the Apache License, Version 2.0 (the "License"); { display-mode: "form" }
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-```
-
-# AutoGraph: Easy control flow for graphs 
+#  AutoGraph：图的简易控制流程
 
 <table class="tfo-notebook-buttons" align="left">
   <td>
@@ -32,18 +12,18 @@ Licensed under the Apache License, Version 2.0 (the "License");
   </td>
 </table>
 
-[AutoGraph](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/autograph/) helps you write complicated graph code using normal Python. Behind the scenes, AutoGraph automatically transforms your code into the equivalent [TensorFlow graph code](https://www.tensorflow.org/guide/graphs). AutoGraph already supports much of the Python language, and that coverage continues to grow. For a list of supported Python language features, see the [Autograph capabilities and limitations](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/autograph/LIMITATIONS.md).
+[AutoGraph](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/autograph/)可帮助您使用普通 Python 编写复杂的图代码。AutoGraph 会在后台自动将您的代码转换为等效的 [TensorFlow 图代码](/docs/tensorflow//guide/graphs)。AutoGraph 已经支持大部分 Python 语言，而且覆盖范围在不断扩大。如需所支持 Python 语言功能的列表，请参阅 [Autograph 功能与限制](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/autograph/LIMITATIONS.md).
 
-## Setup
+## 设置
 
-To use AutoGraph, install the latest version of TensorFlow:
+要使用 AutoGraph，请安装最新版 TensorFlow：
 
 
 ```
 ! pip install -U tf-nightly
 ```
 
-Import TensorFlow, AutoGraph, and any supporting modules:
+导入 TensorFlow、AutoGraph 和所有支持模块：
 
 
 ```
@@ -58,22 +38,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 ```
 
-We'll enable  [eager execution](https://www.tensorflow.org/guide/eager) for demonstration purposes, but AutoGraph works in both eager and [graph execution](https://www.tensorflow.org/guide/graphs) environments:
+为了演示，我们将启用 [eager execution](/docs/tensorflow//guide/eager)，但 AutoGraph 在 Eager Execution 和 [graph execution](/docs/tensorflow//guide/graphs) 环境中都适用：
 
 
 ```
 tf.enable_eager_execution()
 ```
 
-Note: AutoGraph converted code is designed to run during graph execution. When eager exectuon is enabled, use explicit graphs (as this example shows) or `tf.contrib.eager.defun`.
+> 注意：AutoGraph 转化的代码适合在 Graph Execution 期间运行。启用了 Eager Execution 时，请使用显式图（如此例所示）或 `tf.contrib.eager.defun`。
 
-## Automatically convert Python control flow
+## 自动转换 Python 控制流
 
-AutoGraph will convert much of the Python language into the equivalent TensorFlow graph building code. 
+AutoGraph 会将大部分 Python 语言转换为等效的 TensorFlow 图构建代码。
 
-Note: In real applications batching is essential for performance. The best code to convert to AutoGraph is code where the control flow is decided at the _batch_ level. If making decisions at the individual _example_ level, you must index and batch the examples to maintain performance while applying the control flow logic. 
+> 注意：在实际应用中，批处理对性能至关重要。转换为 AutoGraph 的最佳代码是按批次决定控制流的代码。如果按单个样本做出决策，则必须将样本编入索引并对其进行批处理，以便在应用控制流逻辑时维持性能。
 
-AutoGraph converts a function like:
+AutoGraph 会将如下函数：
 
 
 ```
@@ -85,14 +65,14 @@ def square_if_positive(x):
   return x
 ```
 
-To a function that uses graph building:
+转换为使用图构建过程的函数：
 
 
 ```
 print(autograph.to_code(square_if_positive))
 ```
 
-Code written for eager execution can run in a `tf.Graph` with the same results, but with the benfits of graph execution:
+为 Eager Execution 编写的代码可以在 `tf.Graph` 中运行并返回同样的结果，但可以获得 Graph Execution 的优势：
 
 
 ```
@@ -100,7 +80,7 @@ print('Eager results: %2.2f, %2.2f' % (square_if_positive(tf.constant(9.0)),
                                        square_if_positive(tf.constant(-9.0))))
 ```
 
-Generate a graph-version and call it:
+生成图版本并调用它：
 
 
 ```
@@ -115,7 +95,7 @@ with tf.Graph().as_default():
     print('Graph results: %2.2f, %2.2f\n' % (sess.run(g_out1), sess.run(g_out2)))
 ```
 
-AutoGraph supports common Python statements like `while`, `for`, `if`, `break`, and `return`, with support for nesting. Compare this function with the complicated graph verson displayed in the following code blocks:
+AutoGraph 支持常见的 Python 语句（例如 `while`、`for`、`if`、`break` 和 `return`），并且支持嵌套。将此函数与以下代码块中显示的复杂图版本相比较：
 
 
 ```
@@ -141,9 +121,9 @@ with tf.Graph().as_default(), tf.Session() as sess:
 print(autograph.to_code(sum_even))
 ```
 
-## Decorator
+## 修饰符
 
-If you don't need easy access to the original Python function, use the `convert` decorator:
+如果您不需要轻松访问原始 Python 函数，请使用 `convert` 修饰符：
 
 
 ```
@@ -171,14 +151,14 @@ with tf.Graph().as_default():
 
 ```
 
-## Examples
+## 示例
 
-Let's demonstrate some useful Python language features.
+下面，我们来演示一些有用的 Python 语言功能。
 
 
 ### Assert
 
-AutoGraph automatically converts the Python `assert` statement into the equivalent `tf.Assert` code:
+AutoGraph 会自动将 Python `assert` 语句转换为等效的 `tf.Assert` 代码：
 
 
 ```
@@ -196,7 +176,7 @@ with tf.Graph().as_default(), tf.Session() as sess:
 
 ### Print
 
-Use the Python `print` function in-graph:
+在图中使用 Python `print` 函数：
 
 
 ```
@@ -212,9 +192,9 @@ with tf.Graph().as_default(), tf.Session() as sess:
     sess.run(count(tf.constant(5)))
 ```
 
-### Lists
+### 列表
 
-Append to lists in loops (tensor list ops are automatically created):
+附加到循环中的列表（系统会自动创建张量列表操作）：
 
 
 ```
@@ -235,7 +215,7 @@ with tf.Graph().as_default(), tf.Session() as sess:
     sess.run(arange(tf.constant(10)))
 ```
 
-### Nested control flow
+### 嵌套控制流
 
 
 ```
@@ -254,7 +234,7 @@ with tf.Graph().as_default():
     print(sess.run(nearest_odd_square(tf.constant(6))))
 ```
 
-### While loop
+### While 循环
 
 
 ```
@@ -269,7 +249,7 @@ with tf.Graph().as_default():
     print(sess.run(square_until_stop(tf.constant(4), tf.constant(100))))
 ```
 
-### For loop
+### For 循环
 
 
 ```
@@ -311,17 +291,16 @@ with tf.Graph().as_default():
     print(sess.run(idx))
 ```
 
-## Interoperation with `tf.Keras`
+## 与以下类互操作：`tf.Keras`
 
-Now that you've seen the basics, let's build some model components with autograph.
+您现在已经了解了基础知识，下面我们使用 AutoGraph 构建一些模型组件。
 
-It's relatively simple to integrate `autograph` with `tf.keras`. 
+将 `autograph` 与 `tf.keras` 集成相对比较简单。
 
 
-### Stateless functions
+### 无状态函数
 
-For stateless functions, like `collatz` shown below, the easiest way to include them in a keras model is to wrap them up as a layer using `tf.keras.layers.Lambda`.
-
+对于无状态函数（如下面所示的 `collatz`），将其添加到 keras 模型中的最简单方法是使用 `tf.keras.layers.Lambda` 将其封装为层。
 
 ```
 import numpy as np
@@ -349,13 +328,11 @@ result = model.predict(np.array([6171]))
 result
 ```
 
-### Custom Layers and Models
+### 自定义层和模型
 
-<!--TODO(markdaoust) link to full examples  or these referenced models.-->
+将 AutoGraph 与 Keras 层和模型一起使用的最简单方法是对 call 方法执行 @autograph.convert()。要详细了解如何在这些类上进行构建，请参阅 [TensorFlow Keras 指南](https://tensorflow.org/guide/keras#build_advanced_models)。
 
-The easiest way to use AutoGraph with Keras layers and models is to `@autograph.convert()` the `call` method. See the [TensorFlow Keras guide](https://tensorflow.org/guide/keras#build_advanced_models) for details on how to build on these classes. 
-
-Here is a simple example of the [stochastic network depth](https://arxiv.org/abs/1603.09382) technique :
+以下是[随机网络深度](https://arxiv.org/abs/1603.09382)技术的一个简单示例：
 
 
 ```
@@ -394,14 +371,14 @@ class StochasticNetworkDepth(tf.keras.Sequential):
     return x, count
 ```
 
-Let's try it on mnist-shaped data:
+我们在 MNIST 形状的数据上试试：
 
 
 ```
 train_batch = np.random.randn(64, 28, 28, 1).astype(np.float32)
 ```
 
-Build a simple stack of `conv` layers, in the stochastic depth model:
+在随机深度模型中构建一个简单的 `conv` 层堆栈：
 
 
 ```
@@ -419,7 +396,7 @@ with tf.Graph().as_default() as g:
   init = tf.global_variables_initializer()
 ```
 
-Now test it to ensure it behaves as expected in train and test modes:
+现在进行测试，以确保它在训练和测试模式下的行为符合预期：
 
 
 ```
@@ -442,22 +419,22 @@ with tf.Session(graph=g) as sess:
     print()
 ```
 
-## Advanced example: An in-graph training loop
+## 高级示例：图内训练循环
 
-The previous section showed that AutoGraph can be used inside Keras layers and models. Keras models can also be used in AutoGraph code.
+上一节介绍了可以在 Keras 层和模型内使用 AutoGraph。Keras 模型也可用在 AutoGraph 代码中。
 
-Since writing control flow in AutoGraph is easy, running a training loop in a TensorFlow graph should also be easy.  
+由于在 AutoGraph 中编写控制流很容易，因此在 TensorFlow 图中运行训练循环应该也很容易。
 
-This example shows how to train a simple Keras model on MNIST with the entire training process—loading batches, calculating gradients, updating parameters, calculating validation accuracy, and repeating until convergence—is performed in-graph.
+此示例演示了如何在图中执行整个训练过程（加载批次数据、计算梯度、更新参数、计算验证准确率，并重复整个过程直到收敛），以用 MNIST 数据集训练简单的 Keras 模型。
 
-### Download data
+### 下载数据
 
 
 ```
 (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.mnist.load_data()
 ```
 
-### Define the model
+### 定义模型
 
 
 ```
@@ -508,7 +485,7 @@ def get_next_batch(ds):
   return x, y 
 ```
 
-### Define the training loop
+### 定义训练循环
 
 
 ```
@@ -556,7 +533,7 @@ def train(train_ds, test_ds, hp):
           autograph.stack(train_accuracies), autograph.stack(test_accuracies))
 ```
 
-Now build the graph and run the training loop:
+现在，构建图并运行训练循环：
 
 
 ```
@@ -592,4 +569,23 @@ plt.legend(loc='lower right')
 plt.xlabel('Training step')
 plt.ylabel('Accuracy')
 plt.show()
+```
+
+
+##### Copyright 2018 The TensorFlow Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+
+```
+#@title Licensed under the Apache License, Version 2.0 (the "License"); { display-mode: "form" }
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ```
