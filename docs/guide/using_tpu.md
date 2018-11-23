@@ -15,8 +15,8 @@
 
 Estimator 是 TensorFlow 的模型级抽象层。 标准 Estimators 可以在 CPU 和 GPU 上运行模型。您必须使用 tf.contrib.tpu.TPUEstimator 才能在 TPU 上运行模型。
 
-请参阅 TensorFlow 的“使用入门”部分，了解关于如何使用 [预创建的 `Estimator`](../guide/premade_estimators.md)和
-[自定义 `Estimator`s](../guide/custom_estimators.md)的基础知识。
+请参阅 TensorFlow 的“使用入门”部分，了解关于如何使用 [预创建的 `Estimator`](/docs/tensorflow/guide/premade_estimators)和
+[自定义 `Estimator`s](/docs/tensorflow/guide/custom_estimators)的基础知识。
 
 `TPUEstimator` 类与 `Estimator` 类有所不同。
 
@@ -140,9 +140,9 @@ my_tpu_estimator = tf.contrib.tpu.TPUEstimator(
 ### 静态形状
 
 在常规使用期间，TensorFlow 会在图的构建过程中尝试确定各个 tf.Tensor 的形状。在执行期间，任何未知形状的维度都是动态确定的。请参阅
- [Tensor 形状](../guide/tensors.md#shape) 了解详情。
+ [Tensor 形状](/docs/tensorflow/guide/tensors.md#shape) 了解详情。
 
-要在 Cloud TPU 上运行，TensorFlow 模型需使用 [XLA](../performance/xla/index.md)
+要在 Cloud TPU 上运行，TensorFlow 模型需使用 [XLA](/docs/tensorflow/performance/xla/index)
 进行编译。XLA 在编译时会使用类似系统来确定形状。XLA 要求在编译时静态确定所有张量维度。所有形状都必须是常量，且不依赖于外部数据或有状态的操作（如变量或随机数生成器）。
 
 
@@ -150,7 +150,7 @@ my_tpu_estimator = tf.contrib.tpu.TPUEstimator(
 
 请勿在模型中使用 `tf.summary`。
 
-[TensorBoard summaries](../guide/summaries_and_tensorboard.md) 
+[TensorBoard summaries](/docs/tensorflow/guide/summaries_and_tensorboard)
 是查看模型内部的绝佳方式。`TPUEstimator` 会自动将基本总结的最小集记录到 `model_dir` 中的 `event` 文件。不过，在 Cloud TPU 上训练时，自定义总结目前不受支持。因此虽然 `TPUEstimator` 使用总结时仍可在本地运行，但如在 TPU 上使用，则会失败。
 
 ### 指标
@@ -197,7 +197,7 @@ return tf.contrib.tpu.TPUEstimatorSpec(
 `TPUEstimators` 使用 `tf.contrib.tpu.TPUEstimatorSpec`。它和标准 `tf.estimator.EstimatorSpec` 之间有一些差异：
 
 
-*  `eval_metric_ops` 必须封装到 `metrics_fn`中，此字段已重命名为 `eval_metrics` ([see above](#metrics))。
+*  `eval_metric_ops` 必须封装到 `metrics_fn`中，此字段已重命名为 `eval_metrics` ([参考上文](#metrics))。
 *  `tf.train.SessionRunHook` 不受支持，因此这些字段已忽略。
 *  `tf.train.Scaffold`（如果使用）也必须封装在函数中。此字段已重命名为 `scaffold_fn`。
 
@@ -264,7 +264,7 @@ TensorShape([Dimension(None), Dimension(None), Dimension(None)])
 
 ## 数据集
 
-有效使用 `tf.data.Dataset` API 至关重要，因为除非您能够快速向 TPU 提供数据，否则无法使用 Cloud TPU。有关数据集性能的详细信息，请参阅 [输入管道性能指南](../performance/datasets_performance.md)。
+有效使用 `tf.data.Dataset` API 至关重要，因为除非您能够快速向 TPU 提供数据，否则无法使用 Cloud TPU。有关数据集性能的详细信息，请参阅 [输入管道性能指南](/docs/tensorflow/performance/datasets_performance)。
 
 除了最简单的实验（使用 `tf.data.Dataset.from_tensor_slices` 或其他图内数据），您需要将 `TPUEstimator` 的 `Dataset` 读取的所有数据文件存储在 Google Cloud Storage 存储分区中。
 
@@ -272,7 +272,7 @@ TensorShape([Dimension(None), Dimension(None), Dimension(None)])
 
 小数据集可使用 `tf.data.Dataset.cache` 完全加载到内存中。
 
-无论使用何种数据格式，我们强烈建议您[使用大文件](../performance/performance_guide.md#use_large_files)（约 100MB）。这在网络化设置中尤其重要，因为打开文件的开销要大很多。
+无论使用何种数据格式，我们强烈建议您[使用大文件](/docs/tensorflow/performance/performance_guide.md#use_large_files)（约 100MB）。这在网络化设置中尤其重要，因为打开文件的开销要大很多。
 
 无论使用哪种读取器，使用构造函数的 `buffer_size` 参数启用缓存也十分重要。该参数按字节指定。建议使用至少几 MB (`buffer_size=8*1024*1024`)，以便在需要时提供数据。
 
