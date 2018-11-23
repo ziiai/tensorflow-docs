@@ -5,7 +5,7 @@ TensorFlow 计算图功能十分强大，但也非常复杂。图的直观展示
 ![Visualization of a TensorFlow graph](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/graph_vis_animation.gif "Visualization of a TensorFlow graph")
 *TensorFlow 图的可视化效果。*
 
-要查看您自己的图，请运行 TensorBoard 并将其指向作业的日志目录，点击顶部窗格中的“图”标签，然后使用左上角的菜单选择适当的运行条目。要深入了解如何运行 TensorBoard 并确保记录所有必要信息，请参阅 [TensorBoard：直观展示学习](../guide/summaries_and_tensorboard.md)。
+要查看您自己的图，请运行 TensorBoard 并将其指向作业的日志目录，点击顶部窗格中的“图”标签，然后使用左上角的菜单选择适当的运行条目。要深入了解如何运行 TensorBoard 并确保记录所有必要信息，请参阅 [TensorBoard：直观展示学习](/docs/tensorflow/guide/summaries_and_tensorboard)。
 
 ## 名称范围和节点
 
@@ -189,8 +189,8 @@ TensorBoard 提供了数种方法来改变图的视觉布局。这不会改变�
 ## 运行时统计信息
 
 通常，收集运行的运行时元数据（例如节点的总内存使用量、总计算时间和张量形状）很有用。以下代码示例节选自修改版
-[Estimators MNIST 教程](../tutorials/estimators/cnn.md)的训练和测试部分，在该代码段中，我们记录了汇总和运行时统计信息。请参阅
-[汇总教程](../guide/summaries_and_tensorboard.md#serializing-the-data)
+[Estimators MNIST 教程](/docs/tensorflow/tutorials/estimators/cnn)的训练和测试部分，在该代码段中，我们记录了汇总和运行时统计信息。请参阅
+[汇总教程](/docs/tensorflow/guide/summaries_and_tensorboard#serializing-the-data)
 以详细了解如何记录汇总。要查看完整的源代码，请点击[此处](https://www.tensorflow.org/code/tensorflow/examples/tutorials/mnist/mnist_with_summaries.py).
 
 ```python
