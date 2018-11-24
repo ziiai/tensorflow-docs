@@ -1,52 +1,20 @@
-# TensorFlow Debugger
+#  TensorFlow 调试程序
 
-<!-- [comment]: TODO(barryr): Links to and from sections on "Graphs" & "Monitoring Learning". -->
+`tfdbg` 是 TensorFlow 的专用调试程序。借助该调试程序，您可以在训练和推理期间查看运行中 TensorFlow 图的内部结构和状态，由于 TensorFlow 的计算图模式，使用通用调试程序（如 Python 的 `pdb`）很难完成调试。
 
-[TOC]
+本指南重点介绍 tfdbg 的命令行界面 (CLI)。要了解如何使用 `tfdbg` 的图形界面 (GUI)（即 **TensorBoard 调试程序插件**），请访问
+[相关 README 文件](https://github.com/tensorflow/tensorboard/blob/master/tensorboard/plugins/debugger/README.md)。
 
-`tfdbg` is a specialized debugger for TensorFlow. It lets you view the internal
-structure and states of running TensorFlow graphs during training and inference,
-which is difficult to debug with general-purpose debuggers such as Python's `pdb`
-due to TensorFlow's computation-graph paradigm.
+> 注意：TensorFlow 调试程序使用基于 [curses](https://en.wikipedia.org/wiki/Curses_\(programming_library\)) 的文本界面。在 Mac OS X 上，ncurses 库是必需的，而且可以使用 brew install ncurses 进行安装。在 Windows 上，curses 并没有得到同样的支持，因此基于 [readline](https://en.wikipedia.org/wiki/GNU_Readline) 的界面可以与 tfdbg 配合使用（具体方法是使用 pip 安装 pyreadline）。如果您使用的是 Anaconda3，则可以使用 "C:\Program Files\Anaconda3\Scripts\pip.exe" install pyreadline 等命令进行安装。您可以在[此处](https://www.lfd.uci.edu/~gohlke/pythonlibs/#curses)下载非官方 Windows curses 软件包，然后使用 pip install <your_version>.whl 进行安装；不过，Windows 上的 curses 可能无法像 Linux 或 Mac 上的 curses 一样稳定地运行。
 
-This guide focuses on the command-line interface (CLI) of `tfdbg`. For guide on
-how to use the graphical user interface (GUI) of tfdbg, i.e., the
-**TensorBoard Debugger Plugin**, please visit
-[its README](https://github.com/tensorflow/tensorboard/blob/master/tensorboard/plugins/debugger/README.md).
-
-Note: The TensorFlow debugger uses a
-[curses](https://en.wikipedia.org/wiki/Curses_\(programming_library\))-based text
-user interface. On Mac OS X, the `ncurses` library is required and can be
-installed with `brew install ncurses`. On Windows, curses isn't as
-well supported, so a [readline](https://en.wikipedia.org/wiki/GNU_Readline)-based
-interface can be used with tfdbg by installing `pyreadline` with `pip`. If you
-use Anaconda3, you can install it with a command such as
-`"C:\Program Files\Anaconda3\Scripts\pip.exe" install pyreadline`. Unofficial
-Windows curses packages can be downloaded
-[here](https://www.lfd.uci.edu/~gohlke/pythonlibs/#curses), then subsequently
-installed using `pip install <your_version>.whl`, however curses on Windows may
-not work as reliably as curses on Linux or Mac.
-
-This tutorial demonstrates how to use the **tfdbg** CLI to debug the appearance
-of [`nan`s](https://en.wikipedia.org/wiki/NaN)
-and [`inf`s](https://en.wikipedia.org/wiki/Infinity), a frequently-encountered
-type of bug in TensorFlow model development.
-The following example is for users who use the low-level
-[`Session`](https://www.tensorflow.org/api_docs/python/tf/Session) API of
-TensorFlow. Later sections of this document describe how to use **tfdbg**
-with higher-level APIs of TensorFlow, including `tf.estimator`,
-`tf.keras` / `keras` and `tf.contrib.slim`.
-To *observe* such an issue, run the following command without the debugger (the
-source code can be found
-[here](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/debug/examples/debug_mnist.py)):
+本教程展示了如何使用 tfdbg CLI 调试出现 `nan` 和 `inf` 的问题，这是 TensorFlow 模型开发期间经常出现的一种错误。下面的示例适用于使用低阶 TensorFlow Session API 的用户。本文档的后面部分介绍了如何将 `tfdbg` 与 TensorFlow 的更高阶 API（包括 `tf.estimator`、`tf.keras` / `keras` 和 `tf.contrib.slim`）结合使用。要观察此类问题，请在不使用调试程序的情况下运行以下命令（可在
+[此处](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/debug/examples/debug_mnist.py)找到源代码）：
 
 ```none
 python -m tensorflow.python.debug.examples.debug_mnist
 ```
 
-This code trains a simple neural network for MNIST digit image recognition.
-Notice that the accuracy increases slightly after the first training step, but
-then gets stuck at a low (near-chance) level:
+此代码训练了一个简单的神经网络来识别 MNIST 数字图像。请注意，在完成第一个训练步之后，准确率略有提高，但之后停滞在较低（近机会）水平：
 
 ```none
 Accuracy at step 0: 0.1113
@@ -56,19 +24,13 @@ Accuracy at step 3: 0.098
 Accuracy at step 4: 0.098
 ```
 
-Wondering what might have gone wrong, you suspect that certain nodes in the
-training graph generated bad numeric values such as `inf`s and `nan`s, because
-this is a common cause of this type of training failure.
-Let's use tfdbg to debug this issue and pinpoint the exact graph node where this
-numeric problem first surfaced.
+您想知道哪里出了问题，怀疑训练图中的某些节点生成了错误数值（例如 `inf` 和 `nan`），因为这是导致此类训练失败的常见原因。我们可以使用 `tfdbg` 来调试此问题，并确定第一次出现此数字问题的确切图节点。
 
-## Wrapping TensorFlow Sessions with tfdbg
+## 使用 tfdbg 封装 TensorFlow 会话
 
-To add support for tfdbg in our example, all that is needed is to add the
-following lines of code and wrap the Session object with a debugger wrapper.
-This code is already added in
-[debug_mnist.py](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/debug/examples/debug_mnist.py),
-so you can activate tfdbg CLI with the `--debug` flag at the command line.
+要向示例中的 tfdbg 添加支持，我们只需添加下列代码行，并使用调试程序封装容器封装会话对象。此代码已添加到
+[debug_mnist.py](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/debug/examples/debug_mnist.py)
+中，因此您可以在命令行中使用 --debug 标记激活 tfdbg CLI。
 
 ```python
 # Let your BUILD target depend on "//tensorflow/python/debug:debug_py"
@@ -79,201 +41,149 @@ from tensorflow.python import debug as tf_debug
 sess = tf_debug.LocalCLIDebugWrapperSession(sess)
 ```
 
-This wrapper has the same interface as Session, so enabling debugging requires
-no other changes to the code. The wrapper provides additional features,
-including:
+此封装容器与会话具有相同的界面，因此启用调试时不需要对代码进行其他更改。该封装容器还提供其他功能，包括：
 
-* Bringing up a CLI before and after `Session.run()` calls, to let you
-control the execution and inspect the graph's internal state.
-* Allowing you to register special `filters` for tensor values, to facilitate
-the diagnosis of issues.
+- 在每次 `Session.run()` 调用前后调出 CLI，以便您控制执行情况和检查图的内部状态。
+- 允许您为张量值注册特殊 `filters`，以便诊断问题。
 
-In this example, we have already registered a tensor filter called
-`tfdbg.has_inf_or_nan`,
-which simply determines if there are any `nan` or `inf` values in any
-intermediate tensors (tensors that are neither inputs or outputs of the
-`Session.run()` call, but are in the path leading from the inputs to the
-outputs). This filter is for `nan`s and `inf`s is a common enough use case that
-we ship it with the
-[`debug_data`](../api_guides/python/tfdbg.md#Classes_for_debug_dump_data_and_directories)
-module.
+在本示例中，我们已经注册了一个名为 `tfdbg.has_inf_or_nan` 的张量过滤器，它仅仅确定任何中间张量（不是 `Session.run()` 调用的输入或输出、而是位于从输入到输出的路径中的张量）中是否存在任何 `nan` 或 `inf` 值。此过滤器可以确定是否存在 `nan` 和 `inf`，这是一种常见的用例，我们在 `debug_data` 模块中包含了此过滤器。
 
-Note: You can also write your own custom filters. See `tfdbg.DebugDumpDir.find`
-for additional information.
+> 注意：您还可以自行编写自定义过滤器。要了解详情，请参阅 `DebugDumpDir.find()` 的 API 文档。
 
-## Debugging Model Training with tfdbg
+## 使用 tfdbg 调试模型训练
 
-Let's try training the model again, but with the `--debug` flag added this time:
+我们尝试再次训练模型，但这次添加 `--debug` 标记：
 
 ```none
 python -m tensorflow.python.debug.examples.debug_mnist --debug
 ```
 
-The debug wrapper session will prompt you when it is about to execute the first
-`Session.run()` call, with information regarding the fetched tensor and feed
-dictionaries displayed on the screen.
+调试封装容器会话会在将要执行第一次 `Session.run()` 调用时提示您，而屏幕上会显示关于获取的张量和 `feed` 字典的信息。
 
-![tfdbg run-start UI](https://www.tensorflow.org/images/tfdbg_screenshot_run_start.png)
+![tfdbg run-start UI](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tfdbg_screenshot_run_start.png)
 
-This is what we refer to as the *run-start CLI*. It lists the feeds and fetches
-to the current `Session.run` call, before executing anything.
+这就是我们所说的 run-start CLI。它先列出对当前 `Session.run` 调用的 `feed` 和 `fetch`，然后再执行任何操作。
 
-If the screen size is too small to display the content of the message in its
-entirety, you can resize it.
+如果因屏幕尺寸太小而无法显示完整的消息内容，您可以调整屏幕大小。
 
-Use the **PageUp** / **PageDown** / **Home** / **End** keys to navigate the
-screen output. On most keyboards lacking those keys **Fn + Up** /
-**Fn + Down** / **Fn + Right** / **Fn + Left** will work.
+使用 **PageUp**/**PageDown**/**Home**/**End** 键可以浏览屏幕上的输出。在大部分没有这些键的键盘上，使用 **Fn + Up**/**Fn + Down**/**Fn + Right**/**Fn + Left** 也可以。
 
-Enter the `run` command (or just `r`) at the command prompt:
+在命令提示符处输入 `run` 命令（或只输入 `r`）：
 
 ```
 tfdbg> run
 ```
 
-The `run` command causes tfdbg to execute until the end of the next
-`Session.run()` call, which calculates the model's accuracy using a test data
-set. tfdbg augments the runtime Graph to dump all intermediate tensors.
-After the run ends, tfdbg displays all the dumped tensors values in the
-*run-end CLI*. For example:
+`run` 命令会让 `tfdbg` 一直执行，直到下一次 `Session.run()` 调用结束，而此调用会使用测试数据集计算模型的准确率。`tfdbg` 会扩展运行时图来转储所有中间张量。运行结束后，`tfdbg` 会在 run-end CLI 中显示所有转储的张量值。例如：
 
-![tfdbg run-end UI: accuracy](https://www.tensorflow.org/images/tfdbg_screenshot_run_end_accuracy.png)
+![tfdbg run-end UI: accuracy](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tfdbg_screenshot_run_end_accuracy.png)
 
-This list of tensors can also be obtained by running the command `lt` after you
-executed `run`.
+在执行 `run` 之后运行命令 `lt` 也可以获得此张量列表。
 
-### tfdbg CLI Frequently-Used Commands
+### tfdbg CLI 常用命令
 
-Try the following commands at the `tfdbg>` prompt (referencing the code at
-`tensorflow/python/debug/examples/debug_mnist.py`):
+在 `tfdbg>` 提示符处尝试下列命令（参考 `tensorflow/python/debug/examples/debug_mnist.py` 中的代码）：
 
-| Command            | Syntax or Option | Explanation  | Example                   |
+| 命令            | 语法或选项 | 说明  | 示例                   |
 |:-------------------|:---------------- |:------------ |:------------------------- |
-| **`lt`** | | **List dumped tensors.** | `lt` |
-| | `-n <name_pattern>` | List dumped tensors with names matching given regular-expression pattern. | `lt -n Softmax.*` |
-| | `-t <op_pattern>` | List dumped tensors with op types matching given regular-expression pattern. | `lt -t MatMul` |
-| | `-f <filter_name>` | List only the tensors that pass a registered tensor filter. | `lt -f has_inf_or_nan` |
-| | `-f <filter_name> -fenn <regex>` | List only the tensors that pass a registered tensor filter, excluding nodes with names matching the regular expression. | `lt -f has_inf_or_nan` `-fenn .*Sqrt.*` |
-| | `-s <sort_key>` | Sort the output by given `sort_key`, whose possible values are `timestamp` (default), `dump_size`, `op_type` and `tensor_name`. | `lt -s dump_size` |
-| | `-r` | Sort in reverse order. | `lt -r -s dump_size` |
-| **`pt`** | | **Print value of a dumped tensor.** | |
-| | `pt <tensor>` | Print tensor value. | `pt hidden/Relu:0` |
-| | `pt <tensor>[slicing]` | Print a subarray of tensor, using [numpy](http://www.numpy.org/)-style array slicing. | `pt hidden/Relu:0[0:50,:]` |
-| | `-a` | Print the entirety of a large tensor, without using ellipses. (May take a long time for large tensors.) | `pt -a hidden/Relu:0[0:50,:]` |
-| | `-r <range>` | Highlight elements falling into specified numerical range. Multiple ranges can be used in conjunction. | `pt hidden/Relu:0 -a -r [[-inf,-1],[1,inf]]` |
-| | `-n <number>` | Print dump corresponding to specified 0-based dump number. Required for tensors with multiple dumps. | `pt -n 0 hidden/Relu:0` |
-| | `-s` | Include a summary of the numeric values of the tensor (applicable only to non-empty tensors with Boolean and numeric types such as `int*` and `float*`.) | `pt -s hidden/Relu:0[0:50,:]` |
-| | `-w` | Write the value of the tensor (possibly sliced) to a Numpy file using [`numpy.save()`](https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.save.html) | `pt -s hidden/Relu:0 -w /tmp/relu.npy` |
-| **`@[coordinates]`** | | Navigate to specified element in `pt` output. | `@[10,0]` or `@10,0` |
-| **`/regex`** | |  [less](https://linux.die.net/man/1/less)-style search for given regular expression. | `/inf` |
-| **`/`** | | Scroll to the next line with matches to the searched regex (if any). | `/` |
-| **`pf`** | | **Print a value in the feed_dict to `Session.run`.** | |
-| | `pf <feed_tensor_name>` | Print the value of the feed. Also note that the `pf` command has the `-a`, `-r` and `-s` flags (not listed below), which have the same syntax and semantics as the identically-named flags of `pt`. | `pf input_xs:0` |
-| **eval** | | **Evaluate arbitrary Python and numpy expression.** | |
-| | `eval <expression>` | Evaluate a Python / numpy expression, with numpy available as `np` and debug tensor names enclosed in backticks. | ``eval "np.matmul((`output/Identity:0` / `Softmax:0`).T, `Softmax:0`)"`` |
-| | `-a` | Print a large-sized evaluation result in its entirety, i.e., without using ellipses. | ``eval -a 'np.sum(`Softmax:0`, axis=1)'`` |
-| | `-w` | Write the result of the evaluation to a Numpy file using [`numpy.save()`](https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.save.html) | ``eval -a 'np.sum(`Softmax:0`, axis=1)' -w /tmp/softmax_sum.npy`` |
-| **`ni`** | | **Display node information.** | |
-| | `-a` | Include node attributes in the output. | `ni -a hidden/Relu` |
-| | `-d` | List the debug dumps available from the node. | `ni -d hidden/Relu` |
-| | `-t` | Display the Python stack trace of the node's creation. | `ni -t hidden/Relu` |
-| **`li`** | | **List inputs to node** | |
-| | `-r` | List the inputs to node, recursively (the input tree.) | `li -r hidden/Relu:0` |
-| | `-d <max_depth>` | Limit recursion depth under the `-r` mode. | `li -r -d 3 hidden/Relu:0` |
-| | `-c` | Include control inputs. | `li -c -r hidden/Relu:0` |
-| | `-t` | Show op types of input nodes. | `li -t -r hidden/Relu:0` |
-| **`lo`** | | **List output recipients of node** | |
-| | `-r` | List the output recipients of node, recursively (the output tree.) | `lo -r hidden/Relu:0` |
-| | `-d <max_depth>` | Limit recursion depth under the `-r` mode. | `lo -r -d 3 hidden/Relu:0` |
-| | `-c` | Include recipients via control edges. | `lo -c -r hidden/Relu:0` |
-| | `-t` | Show op types of recipient nodes. | `lo -t -r hidden/Relu:0` |
-| **`ls`** | | **List Python source files involved in node creation.** | |
-| | `-p <path_pattern>` | Limit output to source files matching given regular-expression path pattern. | `ls -p .*debug_mnist.*` |
-| | `-n` | Limit output to node names matching given regular-expression pattern. | `ls -n Softmax.*` |
-| **`ps`** | | **Print Python source file.** | |
-| | `ps <file_path>` | Print given Python source file source.py, with the lines annotated with the nodes created at each of them (if any). | `ps /path/to/source.py` |
-| | `-t` | Perform annotation with respect to Tensors, instead of the default, nodes. | `ps -t /path/to/source.py` |
-| | `-b <line_number>` | Annotate source.py beginning at given line. | `ps -b 30 /path/to/source.py` |
-| | `-m <max_elements>` | Limit the number of elements in the annotation for each line. | `ps -m 100 /path/to/source.py` |
-| **`run`** | | **Proceed to the next Session.run()** | `run` |
-| | `-n` | Execute through the next `Session.run` without debugging, and drop to CLI right before the run after that. | `run -n` |
-| | `-t <T>` | Execute `Session.run` `T - 1` times without debugging, followed by a run with debugging. Then drop to CLI right after the debugged run. | `run -t 10` |
-| | `-f <filter_name>` | Continue executing `Session.run` until any intermediate tensor triggers the specified Tensor filter (causes the filter to return `True`). | `run -f has_inf_or_nan` |
-| | `-f <filter_name> -fenn <regex>` | Continue executing `Session.run` until any intermediate tensor whose node names doesn't match the regular expression triggers the specified Tensor filter (causes the filter to return `True`). | `run -f has_inf_or_nan -fenn .*Sqrt.*` |
-| | `--node_name_filter <pattern>` | Execute the next `Session.run`, watching only nodes with names matching the given regular-expression pattern. | `run --node_name_filter Softmax.*` |
-| | `--op_type_filter <pattern>` | Execute the next `Session.run`, watching only nodes with op types matching the given regular-expression pattern. | `run --op_type_filter Variable.*` |
-| | `--tensor_dtype_filter <pattern>` | Execute the next `Session.run`, dumping only Tensors with data types (`dtype`s) matching the given regular-expression pattern. | `run --tensor_dtype_filter int.*` |
-| | `-p` | Execute the next `Session.run` call in profiling mode. | `run -p` |
-| **`ri`** | | **Display information about the run the current run, including fetches and feeds.** | `ri` |
-| **`config`** | | **Set or show persistent TFDBG UI configuration.** | |
-| | `set` | Set the value of a config item: {`graph_recursion_depth`, `mouse_mode`}. | `config set graph_recursion_depth 3` |
-| | `show` | Show current persistent UI configuration. | `config show` |
-| **`version`** | | **Print the version of TensorFlow and its key dependencies.** | `version` |
-| **`help`** | | **Print general help information** | `help` |
-| | `help <command>` | Print help for given command. | `help lt` |
+| **`lt`** | | 列出转储张量。 | `lt` |
+| | `-n <name_pattern>` | 列出名称符合指定正则表达式格式的转储张量。 | `lt -n Softmax.*` |
+| | `-t <op_pattern>` | 列出指令类型符合指定正则表达式格式的转储张量。 | `lt -t MatMul` |
+| | `-f <filter_name>` | 列出仅通过已注册张量过滤器的张量。 | `lt -f has_inf_or_nan` |
+| | `-f <filter_name> -fenn <regex>` | 列出仅通过已注册张量过滤器的张量，不包括名称符合正则表达式的节点。 | `lt -f has_inf_or_nan` `-fenn .*Sqrt.*` |
+| | `-s <sort_key>` | 按指定的 sort_key 对输出进行排序，该键可能的值为 timestamp（默认）、dump_size、op_type 和 tensor_name。 | `lt -s dump_size` |
+| | `-r` | 按相反的顺序排序。 | `lt -r -s dump_size` |
+| **`pt`** | | 输出转储张量的值。 | |
+| | `pt <tensor>` | 输出张量值。 | `pt hidden/Relu:0` |
+| | `pt <tensor>[slicing]` | 使用 [numpy](http://www.numpy.org/)样式的数组切片输出张量的子数组。 | `pt hidden/Relu:0[0:50,:]` |
+| | `-a` | 输出整个大张量，而不使用省略号（对于大张量来说可能需要很长时间）。 | `pt -a hidden/Relu:0[0:50,:]` |
+| | `-r <range>` | 突出显示属于指定数值范围的元素。可以结合使用多个范围。 | `pt hidden/Relu:0 -a -r [[-inf,-1],[1,inf]]` |
+| | `-n <number>` | 输出编号对应于指定转储编号（从 0 开始）的转储。具有多个转储的张量必须如此。 | `pt -n 0 hidden/Relu:0` |
+| | `-s` | 包括张量的数值摘要（仅适用于布尔型和数字型（例如 int* 和 float*）的非空张量）。 | `pt -s hidden/Relu:0[0:50,:]` |
+| | `-w` | 使用 [`numpy.save()`](https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.save.html) 将张量（可能已切片）的值写入 NumPy 文件 | `pt -s hidden/Relu:0 -w /tmp/relu.npy` |
+| **`@[coordinates]`** | | 转到 pt 输出中的指定元素。 | `@[10,0]` or `@10,0` |
+| **`/regex`** | |  指定正则表达式的 [less](https://linux.die.net/man/1/less)样式搜索。 | `/inf` |
+| **`/`** | | 滚动到下一行，其中显示所搜索的正则表达式的匹配结果（如果有的话）。 | `/` |
+| **`pf`** | | 输出 Session.run 的 feed_dict 中的一个值。 | |
+| | `pf <feed_tensor_name>` | 输出 feed 的值。另请注意，pf 命令具有 -a、-r 和 -s 标记（未在下面列出），它们与 pt 的同名标记具有相同的语法和语义。 | `pf input_xs:0` |
+| **eval** | | 评估任意 Python 和 Numpy 表达式。 | |
+| | `eval <expression>` | 评估 Python/Numpy 表达式，其中 np 表示 Numpy，调试张量名称用反引号引起来。 | ``eval "np.matmul((`output/Identity:0` / `Softmax:0`).T, `Softmax:0`)"`` |
+| | `-a` | 输出很长的完整评估结果，即不使用省略号。 | ``eval -a 'np.sum(`Softmax:0`, axis=1)'`` |
+| | `-w` | 使用 [`numpy.save()`](https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.save.html) 将评估结果写入 NumPy 文件。 | ``eval -a 'np.sum(`Softmax:0`, axis=1)' -w /tmp/softmax_sum.npy`` |
+| **`ni`** | | 显示节点信息。 | |
+| | `-a` | 在输出中包含节点属性。 | `ni -a hidden/Relu` |
+| | `-d` | 列出节点中的调试转储。 | `ni -d hidden/Relu` |
+| | `-t` | 显示节点创建的 Python 堆栈追踪。 | `ni -t hidden/Relu` |
+| **`li`** | | 列出节点的输入 | |
+| | `-r` | 递归地列出节点的输入（输入树）。 | `li -r hidden/Relu:0` |
+| | `-d <max_depth>` | 在 -r 模式下限制递归深度。 | `li -r -d 3 hidden/Relu:0` |
+| | `-c` | 包含控制输入。 | `li -c -r hidden/Relu:0` |
+| | `-t` | 显示输入节点的指令类型。 | `li -t -r hidden/Relu:0` |
+| **`lo`** | | 列出节点的输出接收方 | |
+| | `-r` | 递归地列出节点的输出接收方（输出树）。 | `lo -r hidden/Relu:0` |
+| | `-d <max_depth>` | 在 -r 模式下限制递归深度。 | `lo -r -d 3 hidden/Relu:0` |
+| | `-c` | 包含经由控制边缘的接收方。 | `lo -c -r hidden/Relu:0` |
+| | `-t` | 显示接收方节点的指令类型。 | `lo -t -r hidden/Relu:0` |
+| **`ls`** | | 列出节点创建中所涉及的 Python 源文件。 | |
+| | `-p <path_pattern>` | 限制源文件的输出符合指定正则表达式路径格式。 | `ls -p .*debug_mnist.*` |
+| | `-n` | 限制节点名称的输出符合指定正则表达式格式。 | `ls -n Softmax.*` |
+| **`ps`** | | 输出 Python 源文件。 | |
+| | `ps <file_path>` | 输出指定 Python 源文件 source.py，每行用在此行创建的节点进行注解（如果有）。 | `ps /path/to/source.py` |
+| | `-t` | 执行关于张量（而不是默认的节点）的注解。 | `ps -t /path/to/source.py` |
+| | `-b <line_number>` | 从 source.py 的指定行开始注解。 | `ps -b 30 /path/to/source.py` |
+| | `-m <max_elements>` | 限制每行注解中的元素数量。 | `ps -m 100 /path/to/source.py` |
+| **`run`** | | 继续下一个 Session.run() | `run` |
+| | `-n` | 执行到下一次 Session.run（无需调试），然后在开始下一次运行之前进入 CLI。 | `run -n` |
+| | `-t <T>` | 执行 T - 1 次 Session.run（无需调试），接着执行一次运行（需要调试）。然后，在执行需要调试的运行之后进入 CLI。 | `run -t 10` |
+| | `-f <filter_name>` | 继续执行 Session.run，直到任何中间张量触发指定的张量过滤器（导致过滤器返回 True）为止。 | `run -f has_inf_or_nan` |
+| | `-f <filter_name> -fenn <regex>` | 继续执行 Session.run，直到其节点名称不符合正则表达式的任何中间张量触发指定的张量过滤器（导致过滤器返回 True）为止。 | `run -f has_inf_or_nan -fenn .*Sqrt.*` |
+| | `--node_name_filter <pattern>` | 执行下一次 Session.run，仅查看名称符合指定正则表达式格式的节点。 | `run --node_name_filter Softmax.*` |
+| | `--op_type_filter <pattern>` | 执行下一次 Session.run，仅查看指令类型符合指定正则表达式格式的节点。 | `run --op_type_filter Variable.*` |
+| | `--tensor_dtype_filter <pattern>` | 执行下一次 Session.run，仅转储数据类型 (dtype) 符合指定正则表达式格式的张量。 | `run --tensor_dtype_filter int.*` |
+| | `-p` | 在分析模式下执行下一次 Session.run 调用。 | `run -p` |
+| **`ri`** | | 显示有关运行当前运行的信息，包括 fetch 和 feed。 | `ri` |
+| **`config`** | | 设置或显示永久性 TFDBG 界面配置。 | |
+| | `set` | 设置配置项的值：{graph_recursion_depth, mouse_mode}。 | `config set graph_recursion_depth 3` |
+| | `show` | 显示当前的永久性界面配置。 | `config show` |
+| **`version`** | | 输出 TensorFlow 的版本及其关键依赖项。 | `version` |
+| **`help`** | | 输出常规帮助信息 | `help` |
+| | `help <command>` | 输出指定命令的帮助信息。 | `help lt` |
 
-Note that each time you enter a command, a new screen output
-will appear. This is somewhat analogous to web pages in a browser. You can
-navigate between these screens by clicking the `<--` and
-`-->` text arrows near the top-left corner of the CLI.
+请注意，每次输入命令时，都会显示新的屏幕输出。这有点类似于浏览器中的网页。您可以通过点击 CLI 左上角附近的 `<--` 和 `-->` 文本箭头在这些屏幕之间导航。
 
-### Other Features of the tfdbg CLI
+### tfdbg CLI 的其他功能
 
-In addition to the commands listed above, the tfdbg CLI provides the following
-additional features:
+除了上面列出的命令外，tfdbg CLI 还提供了下列其他功能：
 
-*   To navigate through previous tfdbg commands, type in a few characters
-    followed by the Up or Down arrow keys. tfdbg will show you the history of
-    commands that started with those characters.
-*   To navigate through the history of screen outputs, do either of the
-    following:
-    * Use the `prev` and `next` commands.
-    * Click underlined `<--` and `-->` links near the top left corner of the
-      screen.
-*   Tab completion of commands and some command arguments.
-*   To redirect the screen output to a file instead of the screen, end the
-    command with bash-style redirection. For example, the following command
-    redirects the output of the pt command to the `/tmp/xent_value_slices.txt`
-    file:
+- 要浏览之前的 `tfdbg` 命令，请输入几个字符，然后按向上或向下箭头键。`tfdbg` 会向您显示以这些字符开头的命令的历史记录。
+- 要浏览屏幕输出的历史记录，请执行下列任一操作：
+    - 使用 `prev` 和 `next` 命令。
+- 命令（和一些命令参数）的 Tab 补齐功能。
+- 要将屏幕输出重定向到文件（而不是屏幕），请使用 `bash` 样式重定向结束命令。例如，以下命令会将 `pt` 命令的输出重定向到 `/tmp/xent_value_slices.txt` 文件：
+
 
   ```none
   tfdbg> pt cross_entropy/Log:0[:, 0:10] > /tmp/xent_value_slices.txt
   ```
 
-### Finding `nan`s and `inf`s
+### 查找 nan 和 inf
 
-In this first `Session.run()` call, there happen to be no problematic numerical
-values. You can move on to the next run by using the command `run` or its
-shorthand `r`.
+在第一个 `Session.run()` 调用中，没有出现存在问题的数值。您可以使用命令 `run` 或其简写形式 `r` 转到下一次运行。
 
-> TIP: If you enter `run` or `r` repeatedly, you will be able to move through
-> the `Session.run()` calls in a sequential manner.
->
-> You can also use the `-t` flag to move ahead a number of `Session.run()` calls
-> at a time, for example:
+> 提示：如果您反复输入 `run` 或 `r`，则将能够依序在 `Session.run()` 调用之间移动。
+> 您还可以使用 `-t` 标记一次向前移动多个 `Session.run()` 调用，例如：
 >
 > ```
 > tfdbg> run -t 10
 > ```
 
-Instead of entering `run` repeatedly and manually searching for `nan`s and
-`inf`s in the run-end UI after every `Session.run()` call (for example, by using
-the `pt` command shown in the table above) , you can use the following
-command to let the debugger repeatedly execute `Session.run()` calls without
-stopping at the run-start or run-end prompt, until the first `nan` or `inf`
-value shows up in the graph. This is analogous to *conditional breakpoints* in
-some procedural-language debuggers:
+在每次 `Session.run()` 调用之后，您无需重复输入 `run` 并在 `run-end` 界面中手动搜索 `nan` 和 `inf`（例如，通过使用上表中显示的 `pt` 命令），而是可以使用以下命令让调试程序反复执行 `Session.run()` 调用（不在 `run-start` 或 `run-end` 提示符处停止），直到第一个 `nan` 或 `inf` 值出现在图中。这类似于一些程序式语言调试程序中的条件断点：
 
 ```none
 tfdbg> run -f has_inf_or_nan
 ```
 
-> NOTE: The preceding command works properly because a tensor filter called
-> `has_inf_or_nan` has been registered for you when the wrapped session is
-> created. This filter detects `nan`s and `inf`s (as explained previously).
-> If you have registered any other filters, you can
-> use "run -f" to have tfdbg run until any tensor triggers that filter (cause
-> the filter to return True).
+> 注意：上述命令可正常运行，因为在创建封装会话时已为您注册了一个名为 `has_inf_or_nan` 的张量过滤器。此过滤器会检测 `nan` 和 `inf`（如前所述）。如果您已注册任何其他过滤器，则可以使用“run -f”让 `tfdbg` 一直运行，直到任何张量触发该过滤器（导致过滤器返回 `True`）为止。
 >
 > ``` python
 > def my_filter_callable(datum, tensor):
@@ -283,155 +193,116 @@ tfdbg> run -f has_inf_or_nan
 > sess.add_tensor_filter('my_filter', my_filter_callable)
 > ```
 >
-> Then at the tfdbg run-start prompt run until your filter is triggered:
+> 然后在 `tfdbg run-start` 提示符处运行，直到您的过滤器被触发：
 >
 > ```
 > tfdbg> run -f my_filter
 > ```
 
-See [this API document](https://www.tensorflow.org/api_docs/python/tfdbg/DebugDumpDir#find)
-for more information on the expected signature and return value of the predicate
-`Callable` used with `add_tensor_filter()`.
+请参阅 [此 API 文档](https://www.tensorflow.org/api_docs/python/tfdbg/DebugDumpDir#find)，详细了解与 `add_tensor_filter()` 搭配使用的谓词 `Callable` 的预期签名和返回值。
 
-![tfdbg run-end UI: infs and nans](https://www.tensorflow.org/images/tfdbg_screenshot_run_end_inf_nan.png)
+![tfdbg run-end UI: infs and nans](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tfdbg_screenshot_run_end_inf_nan.png)
 
-As the screen display indicates on the first line, the `has_inf_or_nan` filter is first triggered
-during the fourth `Session.run()` call: an
-[Adam optimizer](https://www.tensorflow.org/api_docs/python/tf/train/AdamOptimizer)
-forward-backward training pass on the graph. In this run, 36 (out of the total
-95) intermediate tensors contain `nan` or `inf` values. These tensors are listed
-in chronological order, with their timestamps displayed on the left. At the top
-of the list, you can see the first tensor in which the bad numerical values
-first surfaced: `cross_entropy/Log:0`.
+如屏幕所示，在第一行中，`has_inf_or_nan` 过滤器在第四次 `Session.run()` 调用期间第一次被触发：Adam 优化器前向-后向训练通过了图。在本次运行中，36 个（共 95 个）中间张量包含 `nan` 或 `inf` 值。这些张量按时间先后顺序列出，具体时间戳显示在左侧。在列表顶部，您可以看到第一次出现错误数值的第一个张量：`cross_entropy/Log:0`。
 
-To view the value of the tensor, click the underlined tensor name
-`cross_entropy/Log:0` or enter the equivalent command:
+要查看张量的值，请点击带下划线的张量名称 `cross_entropy/Log:0` 或输入等效命令：
 
 ```none
 tfdbg> pt cross_entropy/Log:0
 ```
 
-Scroll down a little and you will notice some scattered `inf` values. If the
-instances of `inf` and `nan` are difficult to spot by eye, you can use the
-following command to perform a regex search and highlight the output:
+向下滚动一点，您会发现一些分散的 `inf` 值。如果很难用肉眼找到出现 `inf` 和 `nan` 的地方，可以使用以下命令执行正则表达式搜索并突出显示输出：
 
 ```none
 tfdbg> /inf
 ```
 
-Or, alternatively:
+或者：
 
 ```none
 tfdbg> /(inf|nan)
 ```
 
-You can also use the `-s` or `--numeric_summary` command to get a quick summary
-of the types of numeric values in the tensor:
+您还可以使用 `-s` 或 `--numeric_summary` 命令获取张量中的数值类型的快速摘要：
 
 ``` none
 tfdbg> pt -s cross_entropy/Log:0
 ```
 
-From the summary, you can see that several of the 1000 elements of the
-`cross_entropy/Log:0` tensor are `-inf`s (negative infinities).
+您可以从摘要中看到 `cross_entropy/Log:0` 张量的若干个元素（共 1000 个）都是 `-inf`（负无穷大）。
 
-Why did these infinities appear? To further debug, display more information
-about the node `cross_entropy/Log` by clicking the underlined `node_info` menu
-item on the top or entering the equivalent node_info (`ni`) command:
+为什么会出现这些负无穷大的值？为了进一步进行调试，通过点击顶部带下划线的 `node_info` 菜单项或输入等效的 node_info (`ni`) 命令，显示有关节点 `cross_entropy/Log` 的更多信息：
 
 ```none
 tfdbg> ni cross_entropy/Log
 ```
 
-![tfdbg run-end UI: infs and nans](https://www.tensorflow.org/images/tfdbg_screenshot_run_end_node_info.png)
+![tfdbg run-end UI: infs and nans](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tfdbg_screenshot_run_end_node_info.png)
 
-You can see that this node has the op type `Log`
-and that its input is the node `Softmax`. Run the following command to
-take a closer look at the input tensor:
+您可以看到，此节点的指令类型为 `Log`，输入为节点 `Softmax`。运行以下命令可进一步查看输入张量：
 
 ```none
 tfdbg> pt Softmax:0
 ```
 
-Examine the values in the input tensor, searching for zeros:
+检查输入张量中的值，并搜索其中是否存在零：
 
 ```none
 tfdbg> /0\.000
 ```
 
-Indeed, there are zeros. Now it is clear that the origin of the bad numerical
-values is the node `cross_entropy/Log` taking logs of zeros. To find out the
-culprit line in the Python source code, use the `-t` flag of the `ni` command
-to show the traceback of the node's construction:
+确实存在零。现在很明显，错误数值的根源是节点 `cross_entropy/Log` 取零的对数。要在 Python 源代码中找出导致错误的行，请使用 `ni` 命令的 `-t` 标记来显示节点构造的回溯：
 
 ```none
 tfdbg> ni -t cross_entropy/Log
 ```
 
-If you click "node_info" at the top of the screen, tfdbg automatically shows the
-traceback of the node's construction.
+如果您点击屏幕顶部的“node_info”，tfdbg 会自动显示节点构造的回溯。
 
-From the traceback, you can see that the op is constructed at the following
-line:
-[`debug_mnist.py`](https://www.tensorflow.org/code/tensorflow/python/debug/examples/debug_mnist.py):
+从回溯中可以看到该操作是在以下行构建的 - 
+[`debug_mnist.py`](https://www.tensorflow.org/code/tensorflow/python/debug/examples/debug_mnist.py)：
 
 ```python
 diff = y_ * tf.log(y)
 ```
 
-**tfdbg** has a feature that makes it easy to trace Tensors and ops back to
-lines in Python source files. It can annotate lines of a Python file with
-the ops or Tensors created by them. To use this feature,
-simply click the underlined line numbers in the stack trace output of the
-`ni -t <op_name>` commands, or use the `ps` (or `print_source`) command such as:
-`ps /path/to/source.py`. For example, the following screenshot shows the output
-of a `ps` command.
+**tfdbg** 有一个可以轻松将张量和指令追溯到 Python 源文件中的行的功能。它可以用行创建的指令或张量注解 Python 文件的行。要使用此功能，只需点击 `ni -t <op_name>` 命令的堆栈追踪输出中带下划线的行编号，或者使用 `ps`（或 `print_source`）命令，例如：`ps /path/to/source.py`。例如，以下屏幕截图显示了 `ps` 命令的输出。
 
-![tfdbg run-end UI: annotated Python source file](https://www.tensorflow.org/images/tfdbg_screenshot_run_end_annotated_source.png)
+![tfdbg run-end UI: annotated Python source file](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tfdbg_screenshot_run_end_annotated_source.png)
 
-### Fixing the problem
+### 解决问题
 
-To fix the problem, edit `debug_mnist.py`, changing the original line:
+要解决此问题，请修改 `debug_mnist.py`，将原始行：
 
 ```python
 diff = -(y_ * tf.log(y))
 ```
 
-to the built-in, numerically-stable implementation of softmax cross-entropy:
+更改为 softmax 交叉熵的在数值上稳定的内置实现：
 
 ```python
 diff = tf.losses.softmax_cross_entropy(labels=y_, logits=logits)
 ```
 
-Rerun with the `--debug` flag as follows:
+用 `--debug` 标记重新运行，如下所示：
 
 ```none
 python -m tensorflow.python.debug.examples.debug_mnist --debug
 ```
 
-At the `tfdbg>` prompt, enter the following command:
+在 `tfdbg>` 提示符处输入以下命令：
 
 ```none
 run -f has_inf_or_nan`
 ```
 
-Confirm that no tensors are flagged as containing `nan` or `inf` values, and
-accuracy now continues to rise rather than getting stuck. Success!
+确认没有任何张量被标记为包含 `nan` 或 `inf` 值，并且准确率现在继续上升（而不是停滞不变）。成功！
 
-## Debugging TensorFlow Estimators
+## 调试 TensorFlow Estimator
 
-This section explains how to debug TensorFlow programs that use the `Estimator`
-APIs. Part of the convenience provided by these APIs is that
-they manage `Session`s internally. This makes the `LocalCLIDebugWrapperSession`
-described in the preceding sections inapplicable. Fortunately, you can still
-debug them by using special `hook`s provided by `tfdbg`.
+本部分介绍了如何调试使用 `Estimator` API 的 TensorFlow 程序。这些 API 提供的部分便利性是它们在内部管理 `Session`。这样一来，上面的部分介绍的 `LocalCLIDebugWrapperSession` 就不适用了。幸运的是，您仍然可以使用 `tfdbg` 提供的特殊 `hook` 调试它们。
 
-`tfdbg` can debug the
-`tf.estimator.Estimator.train`,
-`tf.estimator.Estimator.evaluate` and
-`tf.estimator.Estimator.predict`
-methods of tf-learn `Estimator`s. To debug `Estimator.train()`,
-create a `LocalCLIDebugHook` and supply it in the `hooks` argument. For example:
+`tfdbg` 可以调试 `tf-learn Estimator` 的 `train()`、`evaluate()` 和 `predict()` 方法。要调试 `Estimator.train()`，请创建一个 `LocalCLIDebugHook` 并将其用作 `hooks` 参数的一部分。例如：
 
 ```python
 # First, let your BUILD target depend on "//tensorflow/python/debug:debug_py"
@@ -448,8 +319,7 @@ classifier.train(input_fn,
                  hooks=hooks)
 ```
 
-Similarly, to debug `Estimator.evaluate()` and `Estimator.predict()`, assign
-hooks to the `hooks` parameter, as in the following example:
+同样，要调试 `Estimator.evaluate()` 和 `Estimator.predict()`，请为 `hooks` 参数分配钩子，如下例所示：
 
 ```python
 # To debug `evaluate`:
@@ -461,25 +331,18 @@ predict_results = classifier.predict(predict_input_fn, hooks=hooks)
 ```
 
 [debug_tflearn_iris.py](https://www.tensorflow.org/code/tensorflow/python/debug/examples/debug_tflearn_iris.py),
-contains a full example of how to use the tfdbg with `Estimator`s.
-To run this example, do:
+包含如何搭配使用 `tfdbg` 和 `Estimator` 的完整示例。要运行此示例，请执行以下命令：
 
 ```none
 python -m tensorflow.python.debug.examples.debug_tflearn_iris --debug
 ```
 
-The `LocalCLIDebugHook` also allows you to configure a `watch_fn` that can be
-used to flexibly specify what `Tensor`s to watch on different `Session.run()`
-calls, as a function of the `fetches` and `feed_dict` and other states. See
-`tfdbg.DumpingDebugWrapperSession.__init__`
-for more details.
+`LocalCLIDebugHook` 还允许您配置 `watch_fn`，后者可用于灵活指定在不同的 `Session.run()` 调用期间要查看哪些 `Tensor`，这些调用作为 `fetches` 和 `feed_dict` 以及其他状态的函数。如需了解详情，请参阅
+`tfdbg.DumpingDebugWrapperSession.__init__` 文档。
 
-## Debugging Keras Models with TFDBG
+## 使用 TFDBG 调试 Keras 模型
 
-To use TFDBG with
-[tf.keras](https://www.tensorflow.org/api_docs/python/tf/keras),
-let the Keras backend use a TFDBG-wrapped Session object. For example, to use
-the CLI wrapper:
+要结合使用 TFDBG 和 `tf.keras`，请允许 Keras 后端使用 TFDBG 封装的会话对象。例如，要使用 CLI 封装容器，请运行以下代码：
 
 ``` python
 import tensorflow as tf
@@ -496,21 +359,18 @@ model.evaluate(...)
 model.predict(...)
 ```
 
-With minor modification, the preceding code example also works for the
-[non-TensorFlow version of Keras](https://keras.io/) running against a
-TensorFlow backend. You just need to replace `tf.keras.backend` with
-`keras.backend`.
+稍加修改后，前面的代码示例也适用于针对 TensorFlow 后端运行的
+[非 TensorFlow 版 Keras](https://keras.io/) 。您只需用 `keras.backend` 替换 `tf.keras.backend` 即可。
 
-## Debugging tf-slim with TFDBG
+## 使用 TFDBG 调试 tf-slim
 
-TFDBG supports debugging of training and evaluation with
+TFDBG 支持对
 [tf-slim](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/slim).
-As detailed below, training and evaluation require slightly different debugging
-workflows.
+进行训练和评估调试。如下所述，训练和评估需要略微不同的调试工作流程。
 
-### Debugging training in tf-slim
-To debug the training process, provide `LocalCLIDebugWrapperSession` to the
-`session_wrapper` argument of `slim.learning.train()`. For example:
+### 在 tf-slim 中调试训练流程
+
+要调试训练流程，需要将 `LocalCLIDebugWrapperSession` 提供给 `slim.learning.train()` 的 `session_wrapper` 参数。例如：
 
 ``` python
 import tensorflow as tf
@@ -524,9 +384,9 @@ tf.contrib.slim.learning.train(
     session_wrapper=tf_debug.LocalCLIDebugWrapperSession)
 ```
 
-### Debugging evaluation in tf-slim
-To debug the evaluation process, provide `LocalCLIDebugHook` to the
-`hooks` argument of `slim.evaluation.evaluate_once()`. For example:
+### 在 tf-slim 中调试评估流程
+
+要调试评估流程，需要将 `LocalCLIDebugHook` 提供给 `slim.evaluation.evaluate_once()` 的 `hooks` 参数。例如：
 
 ``` python
 import tensorflow as tf
@@ -542,22 +402,13 @@ tf.contrib.slim.evaluation.evaluate_once(
     hooks=[tf_debug.LocalCLIDebugHook()])
 ```
 
-## Offline Debugging of Remotely-Running Sessions
+## 离线调试远程运行的会话
 
-Often, your model is running on a remote machine or a process that you don't
-have terminal access to. To perform model debugging in such cases, you can use
-the `offline_analyzer` binary of `tfdbg` (described below). It operates on
-dumped data directories. This can be done to both the lower-level `Session` API
-and the higher-level `Estimator` API.
+您的模型往往在您没有终端访问权限的远程机器或进程上运行。要在这种情况下调试模型，您可以使用 `tfdbg` 的 `offline_analyzer` 二进制文件（如下所述）。它在转储的数据目录上运行。可以对较低阶的 `Session` API 以及较高阶的 `Estimator` API 执行此操作。
 
-### Debugging Remote tf.Sessions
+### 调试远程 tf.Sessions
 
-If you interact directly with the `tf.Session` API in `python`, you can
-configure the `RunOptions` proto that you call your `Session.run()` method
-with, by using the method `tfdbg.watch_graph`.
-This will cause the intermediate tensors and runtime graphs to be dumped to a
-shared storage location of your choice when the `Session.run()` call occurs
-(at the cost of slower performance). For example:
+如果您直接与 `tf.Session` API（python 版）互动，则可以使用 `tfdbg.watch_graph` 方法配置对其调用 `Session.run()` 方法的 `RunOptions` 原型。这样一来，在发生 `Session.run()` 调用时，中间张量和运行时图会被转储到您选择的共享存储位置（以降低性能为代价）。例如：
 
 ```python
 from tensorflow.python import debug as tf_debug
@@ -574,20 +425,14 @@ tf_debug.watch_graph(
 session.run(fetches, feed_dict=feeds, options=run_options)
 ```
 
-Later, in an environment that you have terminal access to (for example, a local
-computer that can access the shared storage location specified in the code
-above), you can load and inspect the data in the dump directory on the shared
-storage by using the `offline_analyzer` binary of `tfdbg`. For example:
+之后，在您拥有终端访问权限的环境（例如，一台可以访问上述代码指定的共享存储位置的本地计算机）中，您可以使用 `tfdbg` 的 `offline_analyzer` 二进制文件加载和检查共享存储上的转储目录中的数据。例如：
 
 ```none
 python -m tensorflow.python.debug.cli.offline_analyzer \
     --dump_dir=/shared/storage/location/tfdbg_dumps_1
 ```
 
-The `Session` wrapper `DumpingDebugWrapperSession` offers an easier and more
-flexible way to generate file-system dumps that can be analyzed offline.
-To use it, simply wrap your session in a `tf_debug.DumpingDebugWrapperSession`.
-For example:
+`Session` 封装容器 `DumpingDebugWrapperSession` 提供了一种更简单、更灵活的方法来生成可离线分析的文件系统转储。要使用该方法，只需将会话封装到 `tf_debug.DumpingDebugWrapperSession` 中即可。例如：
 
 ```python
 # Let your BUILD target depend on "//tensorflow/python/debug:debug_py
@@ -599,22 +444,16 @@ sess = tf_debug.DumpingDebugWrapperSession(
     sess, "/shared/storage/location/tfdbg_dumps_1/", watch_fn=my_watch_fn)
 ```
 
-The `watch_fn` argument accepts a `Callable` that allows you to configure what
-`tensor`s to watch on different `Session.run()` calls, as a function of the
-`fetches` and `feed_dict` to the `run()` call and other states.
+`watch_fn` 参数接受 `Callable`，而后者允许您配置在不同的 `Session.run()` 调用期间要查看哪些 `tensor`，这些调用作为 `run()` 调用的 `fetches` 和 `feed_dict` 及其他状态的函数。
 
-### C++ and other languages
+### C++ 和其他语言
 
-If your model code is written in C++ or other languages, you can also
-modify the `debug_options` field of `RunOptions` to generate debug dumps that
-can be inspected offline. See
-[the proto definition](https://www.tensorflow.org/code/tensorflow/core/protobuf/debug.proto)
-for more details.
+如果您的模型代码是采用 C++ 或其他语言编写的，则您还可以修改 RunOptions 的 debug_options 字段以生成可离线检查的调试转储。要了解详情，请参阅
+[原型定义](https://www.tensorflow.org/code/tensorflow/core/protobuf/debug.proto)。
 
-### Debugging Remotely-Running Estimators
+### 调试远程运行的 Estimator
 
-If your remote TensorFlow server runs `Estimator`s,
-you can use the non-interactive `DumpingDebugHook`. For example:
+如果您在远程 TensorFlow 服务器上运行 `Estimator`，则可以使用非交互式 `DumpingDebugHook`。例如：
 
 ```python
 # Let your BUILD target depend on "//tensorflow/python/debug:debug_py
@@ -625,43 +464,26 @@ from tensorflow.python import debug as tf_debug
 hooks = [tf_debug.DumpingDebugHook("/shared/storage/location/tfdbg_dumps_1")]
 ```
 
-Then this `hook` can be used in the same way as the `LocalCLIDebugHook` examples
-described earlier in this document.
-As the training, evaluation or prediction happens with `Estimator`,
-tfdbg creates directories having the following name pattern:
-`/shared/storage/location/tfdbg_dumps_1/run_<epoch_timestamp_microsec>_<uuid>`.
-Each directory corresponds to a `Session.run()` call that underlies
-the `fit()` or `evaluate()` call. You can load these directories and inspect
-them in a command-line interface in an offline manner using the
-`offline_analyzer` offered by tfdbg. For example:
+然后，可以按照与本文档前面部分介绍的 `LocalCLIDebugHook` 示例一样的方法使用此 `hook`。在训练、评估或预测 `Estimator` 期间，`tfdbg` 会创建具有以下名称格式的目录：`/shared/storage/location/tfdbg_dumps_1/run_<epoch_timestamp_microsec>_<uuid>`。每个目录对应一个 `Session.run()` 调用，而此调用会成为 `fit()` 或 `evaluate()` 调用的基础。您可以使用 `tfdbg` 提供的 `offline_analyzer` 加载这些目录并以离线方式在命令行界面中进行检查。例如：
 
 ```bash
 python -m tensorflow.python.debug.cli.offline_analyzer \
     --dump_dir="/shared/storage/location/tfdbg_dumps_1/run_<epoch_timestamp_microsec>_<uuid>"
 ```
 
-## Frequently Asked Questions
+## 常见问题解答
 
-**Q**: _Do the timestamps on the left side of the `lt` output reflect actual
-       performance in a non-debugging session?_
+**Q**: _`lt` 输出左侧的时间戳是否反映了非调试会话的实际性能？_
 
-**A**: No. The debugger inserts additional special-purpose debug nodes to the
-       graph to record the values of intermediate tensors. These nodes
-       slow down the graph execution. If you are interested in profiling your
-       model, check out
+**A**: 否。调试程序在图中插入了其他特殊用途的调试节点来记录中间张量的值。这些节点减缓了图的执行。如果您对分析模型感兴趣，请查看：
 
-   1. The profiling mode of tfdbg: `tfdbg> run -p`.
+   1. tfdbg 的分析模式： `tfdbg> run -p`.
    2. [tfprof](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/core/profiler)
-      and other profiling tools for TensorFlow.
+      和 TensorFlow 的其他分析工具。
 
-**Q**: _How do I link tfdbg against my `Session` in Bazel? Why do I see an
-       error such as "ImportError: cannot import name debug"?_
+**Q**: _问：如何在 Bazel 中将 tfdbg 与我的 Session 关联起来？为什么我会看到“ImportError: cannot import name debug”这样的错误？_
 
-**A**: In your BUILD rule, declare dependencies:
-       `"//tensorflow:tensorflow_py"` and `"//tensorflow/python/debug:debug_py"`.
-       The first is the dependency that you include to use TensorFlow even
-       without debugger support; the second enables the debugger.
-       Then, In your Python file, add:
+**A**: 在 BUILD 规则中，声明依赖项 `"//tensorflow:tensorflow_py"` 和 `"//tensorflow/python/debug:debug_py"`。所包含的第一个依赖项让您即使没有调试程序支持也可以使用 TensorFlow；第二个用于启用调试程序。然后，在您的 Python 文件中，添加：
 
 ```python
 from tensorflow.python import debug as tf_debug
@@ -670,11 +492,9 @@ from tensorflow.python import debug as tf_debug
 sess = tf_debug.LocalCLIDebugWrapperSession(sess)
 ```
 
-**Q**: _Does tfdbg help debug runtime errors such as shape mismatches?_
+**Q**: _tfdbg 是否可以帮助调试运行时错误（例如形状不匹配）？?_
 
-**A**: Yes. tfdbg intercepts errors generated by ops during runtime and presents
-       the errors with some debug instructions to the user in the CLI.
-       See examples:
+**A**: 可以。tfdbg 在运行时期间会拦截指令生成的错误，并在 CLI 中向用户显示具体错误以及一些调试说明。请查看下面的示例：
 
 ```none
 # Debugging shape mismatch during matrix multiplication.
@@ -686,41 +506,29 @@ python -m tensorflow.python.debug.examples.debug_errors \
     --error uninitialized_variable --debug
 ```
 
-**Q**: _How can I let my tfdbg-wrapped Sessions or Hooks run the debug mode
-only from the main thread?_
+**Q**: _如何让 tfdbg 封装的会话或钩子仅通过主线程运行调试模式？_
 
 **A**:
-This is a common use case, in which the `Session` object is used from multiple
-threads concurrently. Typically, the child threads take care of background tasks
-such as running enqueue operations. Often, you want to debug only the main
-thread (or less frequently, only one of the child threads). You can use the
-`thread_name_filter` keyword argument of `LocalCLIDebugWrapperSession` to
-achieve this type of thread-selective debugging. For example, to debug from the
-main thread only, construct a wrapped `Session` as follows:
+这是一个常见用例，其中 `Session` 对象同时在多个线程中使用。通常情况下，子线程负责后台任务，例如运行入列指令。您通常仅需要调试主线程（或者不太频繁地仅调试一个子线程）。您可以使用 `LocalCLIDebugWrapperSession` 的 `thread_name_filter` 关键字参数实现这种类型的线程选择性调试。例如，您要仅通过主线程进行调试，请按如下方式构造一个封装的 `Session`：
 
 ```python
 sess = tf_debug.LocalCLIDebugWrapperSession(sess, thread_name_filter="MainThread$")
 ```
 
-The above example relies on the fact that main threads in Python have the
-default name `MainThread`.
+以上示例的前提是 Python 中的主线程具有默认名称 `MainThread`。
 
-**Q**: _The model I am debugging is very large. The data dumped by tfdbg
-fills up the free space of my disk. What can I do?_
+**Q**: _我正在调试的模型非常大。tfdbg 转储的数据占满了磁盘的可用空间。我该怎么做？_
 
 **A**:
-You might encounter this problem in any of the following situations:
+出现以下任何情况，您都可能会遇到此问题：
 
-*   models with many intermediate tensors
-*   very large intermediate tensors
-*   many `tf.while_loop` iterations
+*   模型具有很多中间张量
+*   中间张量非常大
+*   很多 `tf.while_loop` 迭代
 
-There are three possible workarounds or solutions:
+有三种可能的解决方案：
 
-*  The constructors of `LocalCLIDebugWrapperSession` and `LocalCLIDebugHook`
-   provide a keyword argument, `dump_root`, to specify the path
-   to which tfdbg dumps the debug data. You can use it to let tfdbg dump the
-   debug data on a disk with larger free space. For example:
+*  `LocalCLIDebugWrapperSession` 和 `LocalCLIDebugHook` 的构造函数提供了一个关键字参数 `dump_root`，用于指定 tfdbg 转储调试数据的路径。您可以使用此参数让 tfdbg 将调试数据转储到可用空间比较多的磁盘上。例如：
 
 ```python
 # For LocalCLIDebugWrapperSession
@@ -729,12 +537,10 @@ sess = tf_debug.LocalCLIDebugWrapperSession(dump_root="/with/lots/of/space")
 # For LocalCLIDebugHook
 hooks = [tf_debug.LocalCLIDebugHook(dump_root="/with/lots/of/space")]
 ```
-   Make sure that the directory pointed to by dump_root is empty or nonexistent.
-   `tfdbg` cleans up the dump directories before exiting.
+   确保 `dump_root` 指向的目录为空或不存在。 在退出之前，tfdbg 会清理转储目录。
 
-*  Reduce the batch size used during the runs.
-*  Use the filtering options of tfdbg's `run` command to watch only specific
-   nodes in the graph. For example:
+*  减小在运行期间使用的批次大小。
+*  使用 tfdbg 的 `run` 命令的过滤选项只查看图形中的特定节点。例如：
 
    ```
    tfdbg> run --node_name_filter .*hidden.*
@@ -742,21 +548,15 @@ hooks = [tf_debug.LocalCLIDebugHook(dump_root="/with/lots/of/space")]
    tfdbg> run --tensor_dtype_filter int.*
    ```
 
-   The first command above watches only nodes whose name match the
-   regular-expression pattern `.*hidden.*`. The second command watches only
-   operations whose name match the pattern `Variable.*`. The third one watches
-   only the tensors whose dtype match the pattern `int.*` (e.g., `int32`).
+   上面的第一个命令仅查看名称符合正则表达式格式 `.*hidden.*` 的节点。上面的第二个命令仅查看名称符合格式 `Variable.*` 的操作。上面的第三个命令仅查看 dtype 符合格式 `int.*`（例如 `int32`）的张量。
+   
 
+**Q**: _为什么不能在 tfdbg CLI 中选择文本？_
 
-**Q**: _Why can't I select text in the tfdbg CLI?_
+**A**: 这是因为 tfdbg CLI 默认在终端中启用了鼠标事件。此 [mouse-mask](https://linux.die.net/man/3/mousemask) 
+模式会替换默认的终端交互，包括文本选择。您可以通过使用命令 `mouse off` 或 `m off` 来重新启用文本选择。
 
-**A**: This is because the tfdbg CLI enables mouse events in the terminal by
-       default. This [mouse-mask](https://linux.die.net/man/3/mousemask) mode
-       overrides default terminal interactions, including text selection. You
-       can re-enable text selection by using the command `mouse off` or
-       `m off`.
-
-**Q**: _Why does the tfdbg CLI show no dumped tensors when I debug code like the following?_
+**Q**: _为什么我在调试如下代码时，tfdbg CLI 没有显示转储的张量？_
 
 ``` python
 a = tf.ones([10], name="a")
@@ -766,14 +566,7 @@ sess = tf_debug.LocalCLIDebugWrapperSession(sess)
 sess.run(b)
 ```
 
-**A**: The reason why you see no data dumped is because every node in the
-       executed TensorFlow graph is constant-folded by the TensorFlow runtime.
-       In this example, `a` is a constant tensor; therefore, the fetched
-       tensor `b` is effectively also a constant tensor. TensorFlow's graph
-       optimization folds the graph that contains `a` and `b` into a single
-       node to speed up future runs of the graph, which is why `tfdbg` does
-       not generate any intermediate tensor dumps. However, if `a` were a
-       `tf.Variable`, as in the following example:
+**A**: 您之所以没有看到转储数据，是因为执行的 TensorFlow 图中的每个节点都由 TensorFlow 运行时进行了常数折叠处理。在本示例中，`a` 是一个常数张量；因此，已获取的张量 `b` 其实也是一个常数张量。TensorFlow 的图优化将包含 `a` 和 `b` 的图折叠成单个节点，以加快图的未来运行速度，因此，tfdbg 不会生成任何中间张量转储。不过，如果 `a` 是一个 `tf.Variable`，如下例所示：
 
 ``` python
 import numpy as np
@@ -786,29 +579,15 @@ sess = tf_debug.LocalCLIDebugWrapperSession(sess)
 sess.run(b)
 ```
 
-the constant-folding would not occur and `tfdbg` should show the intermediate
-tensor dumps.
+则不会发生常数折叠，`tfdbg` 应显示中间张量转储。
 
 
-**Q**: I am debugging a model that generates unwanted infinities or NaNs. But
-       there are some nodes in my model that are known to generate infinities
-       or NaNs in their output tensors even under completely normal conditions.
-       How can I skip those nodes during my `run -f has_inf_or_nan` actions?
+**Q**: 我正在调试一个产生垃圾无穷数或 `NaN` 的模型。但是，我的模型中有一些节点已知会在输出张量中产生无穷值或 `NaN`，即使在完全正常的条件下也是如此。我如何在 `run -f has_inf_or_nan` 操作期间跳过这些节点？
 
-**A**: Use the `--filter_exclude_node_names` (`-fenn` for short) flag. For
-       example, if you known you have a node with name matching the regular
-       expression `.*Sqrt.*` that generates infinities or NaNs regardless
-       of whether the model is behaving correctly, you can exclude the nodes
-       from the infinity/NaN-finding runs with the command
-       `run -f has_inf_or_nan -fenn .*Sqrt.*`.
+**A**: 使用 `--filter_exclude_node_names`（简称为 `-fenn`）标记。例如，如果您知道您有一个名称符合正则表达式 `.*Sqrt.*` 的节点，无论模型是否正常运行，该节点都会产生无穷数或 `NaN`，那么您可以使用命令 `run -f has_inf_or_nan -fenn .*Sqrt.*` 将该节点从无穷数/NaN-finding 运行中排除。
 
 
-**Q**: Is there a GUI for tfdbg?
+**Q**: 是否有用于 tfdbg 的 GUI？
 
-**A**: Yes, the **TensorBoard Debugger Plugin** is the GUI of tfdbg.
-       It offers features such as inspection of the computation graph,
-       real-time visualization of tensor values, continuation to tensor
-       and conditional breakpoints, and tying tensors to their
-       graph-construction source code, all in the browser environment.
-       To get started, please visit
-       [its README](https://github.com/tensorflow/tensorboard/blob/master/tensorboard/plugins/debugger/README.md).
+**A**: 有，**TensorBoard 调试程序插件**就是 tfdbg 的 GUI。它提供了诸如计算图检查、张量值实时可视化、张量连续性和条件性断点以及将张量关联到其图形构建源代码等功能，所有这些功能都在浏览器环境中运行。要开始使用，请访问
+       [相关 README 文件](https://github.com/tensorflow/tensorboard/blob/master/tensorboard/plugins/debugger/README.md).
