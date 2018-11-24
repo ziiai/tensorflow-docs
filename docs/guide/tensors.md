@@ -1,64 +1,41 @@
-# Tensors
+#  张量
 
-TensorFlow, as the name indicates, is a framework to define and run computations
-involving tensors. A **tensor** is a generalization of vectors and matrices to
-potentially higher dimensions. Internally, TensorFlow represents tensors as
-n-dimensional arrays of base datatypes.
+正如名称所示，TensorFlow 这一框架定义和运行涉及张量的计算。张量是对矢量和矩阵向潜在的更高维度的泛化。TensorFlow 在内部将张量表示为基本数据类型的 n 维数组。
 
-When writing a TensorFlow program, the main object you manipulate and pass
-around is the `tf.Tensor`. A `tf.Tensor` object represents a partially defined
-computation that will eventually produce a value. TensorFlow programs work by
-first building a graph of `tf.Tensor` objects, detailing how each tensor is
-computed based on the other available tensors and then by running parts of this
-graph to achieve the desired results.
+在编写 TensorFlow 程序时，您操作和传递的主要对象是 `tf.Tensor`。`tf.Tensor` 对象表示一个部分定义的计算，最终会生成一个值。TensorFlow 程序首先会构建一个 `tf.Tensor` 对象图，详细说明如何基于其他可用张量计算每个张量，然后运行该图的某些部分以获得期望的结果。
 
-A `tf.Tensor` has the following properties:
+`tf.Tensor` 具有以下属性：
 
- * a data type (`float32`, `int32`, or `string`, for example)
- * a shape
+- 数据类型（例如 `float32`、`int32` 或 `string`）
+- 形状
 
+张量中的每个元素都具有相同的数据类型，且该数据类型一定是已知的。形状，即张量的维数和每个维度的大小，可能只有部分已知。如果其输入的形状也完全已知，则大多数操作会生成形状完全已知的张量，但在某些情况下，只能在执行图时获得张量的形状。
 
-Each element in the Tensor has the same data type, and the data type is always
-known. The shape (that is, the number of dimensions it has and the size of each
-dimension) might be only partially known. Most operations produce tensors of
-fully-known shapes if the shapes of their inputs are also fully known, but in
-some cases it's only possible to find the shape of a tensor at graph execution
-time.
+某些类型的张量有点特殊，TensorFlow 指南的其他部分有所介绍。以下是主要特殊张量：
 
-Some types of tensors are special, and these will be covered in other
-units of the TensorFlow guide. The main ones are:
+- `tf.Variable`
+- `tf.constant`
+- `tf.placeholder`
+- `tf.SparseTensor`
 
-  * `tf.Variable`
-  * `tf.constant`
-  * `tf.placeholder`
-  * `tf.SparseTensor`
+除了 `tf.Variable` 以外，张量的值是不变的，这意味着对于单个执行任务，张量只有一个值。然而，两次评估同一张量可能会返回不同的值；例如，该张量可能是从磁盘读取数据的结果，或是生成随机数的结果。
 
-With the exception of `tf.Variable`, the value of a tensor is immutable, which
-means that in the context of a single execution tensors only have a single
-value. However, evaluating the same tensor twice can return different values;
-for example that tensor can be the result of reading data from disk, or
-generating a random number.
+## 阶
 
-## Rank
+`tf.Tensor` 对象的阶是它本身的维数。阶的同义词包括：**秩**、**等级**或 **n 维**。请注意，TensorFlow 中的阶与数学中矩阵的阶并不是同一个概念。如下表所示，TensorFlow 中的每个阶都对应一个不同的数学实例：
 
-The **rank** of a `tf.Tensor` object is its number of dimensions. Synonyms for
-rank include **order** or **degree** or **n-dimension**.
-Note that rank in TensorFlow is not the same as matrix rank in mathematics.
-As the following table shows, each rank in TensorFlow corresponds to a
-different mathematical entity:
-
-Rank | Math entity
+阶 | 数学实例
 --- | ---
-0 | Scalar (magnitude only)
-1 | Vector (magnitude and direction)
-2 | Matrix (table of numbers)
-3 | 3-Tensor (cube of numbers)
-n | n-Tensor (you get the idea)
+0 | 标量（只有大小）
+1 | 矢量（大小和方向）
+2 | 矩阵（数据表）
+3 | 3 阶张量（数据立体）
+n | n 阶张量（自行想象）
 
 
-### Rank 0
+### 0 阶
 
-The following snippet demonstrates creating a few rank 0 variables:
+以下摘要演示了创建 0 阶变量的过程：
 
 ```python
 mammal = tf.Variable("Elephant", tf.string)
@@ -67,13 +44,11 @@ floating = tf.Variable(3.14159265359, tf.float64)
 its_complicated = tf.Variable(12.3 - 4.85j, tf.complex64)
 ```
 
-Note: A string is treated as a single item in TensorFlow, not as a sequence of
-characters. It is possible to have scalar strings, vectors of strings, etc.
+> 注意：字符串在 TensorFlow 中被视为单一项，而不是一连串字符。TensorFlow 可以有标量字符串，字符串矢量，等等。
 
-### Rank 1
+### 1 阶
 
-To create a rank 1 `tf.Tensor` object, you can pass a list of items as the
-initial value. For example:
+要创建 1 阶 `tf.Tensor` 对象，您可以传递一个项目列表作为初始值。例如：
 
 ```python
 mystr = tf.Variable(["Hello"], tf.string)
@@ -83,10 +58,9 @@ its_very_complicated = tf.Variable([12.3 - 4.85j, 7.5 - 6.23j], tf.complex64)
 ```
 
 
-### Higher ranks
+### 更高阶
 
-A rank 2 `tf.Tensor` object consists of at least one row and at least
-one column:
+2 阶 `tf.Tensor` 对象至少包含一行和一列：
 
 ```python
 mymat = tf.Variable([[7],[11]], tf.int16)
@@ -97,45 +71,36 @@ rank_of_squares = tf.rank(squarish_squares)
 mymatC = tf.Variable([[7],[11]], tf.int32)
 ```
 
-Higher-rank Tensors, similarly, consist of an n-dimensional array. For example,
-during image processing, many tensors of rank 4 are used, with dimensions
-corresponding to example-in-batch, image width, image height, and color channel.
+同样，更高阶的张量由一个 n 维数组组成。例如，在图像处理过程中，会使用许多 4 阶张量，维度对应批次大小、图像宽度、图像高度和颜色通道。
 
 ``` python
 my_image = tf.zeros([10, 299, 299, 3])  # batch x height x width x color
 ```
 
-### Getting a `tf.Tensor` object's rank
+### 获取 `tf.Tensor` 对象的阶
 
-To determine the rank of a `tf.Tensor` object, call the `tf.rank` method.
-For example, the following method programmatically determines the rank
-of the `tf.Tensor` defined in the previous section:
+要确定 `tf.Tensor` 对象的阶，需调用 `tf.rank` 方法。例如，以下方法会程序化地确定上一章节中所定义的 `tf.Tensor` 的阶：
 
 ```python
 r = tf.rank(my_image)
 # After the graph runs, r will hold the value 4.
 ```
 
-### Referring to `tf.Tensor` slices
+### 引用 `tf.Tensor` 切片
 
-Since a `tf.Tensor` is an n-dimensional array of cells, to access a single cell
-in a `tf.Tensor` you need to specify n indices.
+由于 `tf.Tensor` 是 n 维单元数组，因此要访问 `tf.Tensor` 中的某一单元，需要指定 n 个索引。
 
-For a rank 0 tensor (a scalar), no indices are necessary, since it is already a
-single number.
+0 阶张量（标量）不需要索引，因为其本身便是单一数字。
 
-For a rank 1 tensor (a vector), passing a single index allows you to access a
-number:
+对于 1 阶张量（矢量），可以通过传递一个索引访问某个数字：
 
 ```python
 my_scalar = my_vector[2]
 ```
 
-Note that the index passed inside the `[]` can itself be a scalar `tf.Tensor`, if
-you want to dynamically choose an element from the vector.
+请注意，如果想从矢量中动态地选择元素，那么在 `[]` 内传递的索引本身可以是一个标量 `tf.Tensor`。
 
-For tensors of rank 2 or higher, the situation is more interesting. For a
-`tf.Tensor` of rank 2, passing two numbers returns a scalar, as expected:
+对于 2 阶及以上的张量，情况更为有趣。对于 2 阶 `tf.Tensor`，传递两个数字会如预期般返回一个标量：
 
 
 ```python
@@ -143,7 +108,7 @@ my_scalar = my_matrix[1, 2]
 ```
 
 
-Passing a single number, however, returns a subvector of a matrix, as follows:
+而传递一个数字则会返回一个矩阵子矢量，如下所示：
 
 
 ```python
@@ -151,64 +116,42 @@ my_row_vector = my_matrix[2]
 my_column_vector = my_matrix[:, 3]
 ```
 
-The `:` notation is python slicing syntax for "leave this dimension alone". This
-is useful in higher-rank Tensors, as it allows you to access its subvectors,
-submatrices, and even other subtensors.
+符号 `:` 是 Python 切片语法，意味“不要触碰该维度”。这对更高阶的张量来说很有用，可以帮助访问其子矢量，子矩阵，甚至其他子张量。
 
 
-## Shape
+## 形状
 
-The **shape** of a tensor is the number of elements in each dimension.
-TensorFlow automatically infers shapes during graph construction. These inferred
-shapes might have known or unknown rank. If the rank is known, the sizes of each
-dimension might be known or unknown.
+张量的形状是每个维度中元素的数量。TensorFlow 在图的构建过程中自动推理形状。这些推理的形状可能具有已知或未知的阶。如果阶已知，则每个维度的大小可能已知或未知。
 
-The TensorFlow documentation uses three notational conventions to describe
-tensor dimensionality: rank, shape, and dimension number. The following table
-shows how these relate to one another:
+TensorFlow 文件编制中通过三种符号约定来描述张量维度：阶，形状和维数。下表阐述了三者如何相互关联：
 
-Rank | Shape | Dimension number | Example
+阶 | 形状 | 维数 | 示例    
 --- | --- | --- | ---
-0 | [] | 0-D | A 0-D tensor.  A scalar.
-1 | [D0] | 1-D | A 1-D tensor with shape [5].
-2 | [D0, D1] | 2-D | A 2-D tensor with shape [3, 4].
-3 | [D0, D1, D2] | 3-D | A 3-D tensor with shape [1, 4, 3].
-n | [D0, D1, ... Dn-1] | n-D | A tensor with shape [D0, D1, ... Dn-1].
+0 | [] | 0-D | 0 维张量。标量。
+1 | [D0] | 1-D | 形状为 [5] 的 1 维张量。
+2 | [D0, D1] | 2-D | 形状为 [3, 4] 的 2 维张量。
+3 | [D0, D1, D2] | 3-D | 形状为 [1, 4, 3] 的 3 维张量。
+n | [D0, D1, ... Dn-1] | n-D | 形状为 [D0, D1, ... Dn-1] 的张量。
 
-Shapes can be represented via Python lists / tuples of ints, or with the
-`tf.TensorShape`.
+形状可以通过整型 Python 列表/元组或者 `tf.TensorShape` 表示。
 
-### Getting a `tf.Tensor` object's shape
+### 获取 `tf.Tensor` 对象的形状
 
-There are two ways of accessing the shape of a `tf.Tensor`. While building the
-graph, it is often useful to ask what is already known about a tensor's
-shape. This can be done by reading the `shape` property of a `tf.Tensor` object.
-This method returns a `TensorShape` object, which is a convenient way of
-representing partially-specified shapes (since, when building the graph, not all
-shapes will be fully known).
+可以通过两种方法获取 `tf.Tensor` 的形状。在构建图的时候，询问有关张量形状的已知信息通常很有帮助。可以通过查看 `shape` 属性（属于 `tf.Tensor` 对象）获取这些信息。该方法会返回一个 `TensorShape` 对象，这样可以方便地表示部分指定的形状（因为在构建图的时候，并不是所有形状都完全已知）。
 
-It is also possible to get a `tf.Tensor` that will represent the fully-defined
-shape of another `tf.Tensor` at runtime. This is done by calling the `tf.shape`
-operation. This way, you can build a graph that manipulates the shapes of
-tensors by building other tensors that depend on the dynamic shape of the input
-`tf.Tensor`.
+也可以获取一个将在运行时表示另一个 `tf.Tensor` 的完全指定形状的 `tf.Tensor`。为此，可以调用 `tf.shape` 操作。如此一来，您可以构建一个图，通过构建其他取决于输入 `tf.Tensor` 的动态形状的张量来控制张量的形状。
 
-For example, here is how to make a vector of zeros with the same size as the
-number of columns in a given matrix:
+例如，以下代码展示了如何创建大小与给定矩阵中的列数相同的零矢量：
 
 ``` python
 zeros = tf.zeros(my_matrix.shape[1])
 ```
 
-### Changing the shape of a `tf.Tensor`
+### 改变形状：`tf.Tensor`
 
-The **number of elements** of a tensor is the product of the sizes of all its
-shapes. The number of elements of a scalar is always `1`. Since there are often
-many different shapes that have the same number of elements, it's often
-convenient to be able to change the shape of a `tf.Tensor`, keeping its elements
-fixed. This can be done with `tf.reshape`.
+张量的元素数量是其所有形状大小的乘积。标量的元素数量永远是 `1`。由于通常有许多不同的形状具有相同数量的元素，因此如果能够改变 `tf.Tensor` 的形状并使其元素固定不变通常会很方便。为此，可以使用 `tf.reshape`。
 
-The following examples demonstrate how to reshape tensors:
+以下示例演示如何重构张量：
 
 ```python
 rank_three_tensor = tf.ones([3, 4, 5])
@@ -227,40 +170,28 @@ matrixAlt = tf.reshape(matrixB, [4, 3, -1])  # Reshape existing content into a
 yet_another = tf.reshape(matrixAlt, [13, 2, -1])  # ERROR!
 ```
 
-## Data types
+## 数据类型
 
-In addition to dimensionality, Tensors have a data type. Refer to the
-`tf.DType` page for a complete list of the data types.
+除维度外，张量还具有数据类型。如需数据类型的完整列表，请参阅 `tf.DType` 页面。
 
-It is not possible to have a `tf.Tensor` with more than one data type. It is
-possible, however, to serialize arbitrary data structures as `string`s and store
-those in `tf.Tensor`s.
+一个 `tf.Tensor` 只能有一种数据类型。但是，可以将任意数据结构序列化为 `string` 并将其存储在 `tf.Tensor` 中。
 
-It is possible to cast `tf.Tensor`s from one datatype to another using
-`tf.cast`:
+可以将 `tf.Tensor` 从一种数据类型转型为另一种（通过 `tf.cast`）：
 
 ``` python
 # Cast a constant integer tensor into floating point.
 float_tensor = tf.cast(tf.constant([1, 2, 3]), dtype=tf.float32)
 ```
 
-To inspect a `tf.Tensor`'s data type use the `Tensor.dtype` property.
+要检查 `tf.Tensor` 的数据类型，请使用 `Tensor.dtype` 属性。
 
-When creating a `tf.Tensor` from a python object you may optionally specify the
-datatype. If you don't, TensorFlow chooses a datatype that can represent your
-data. TensorFlow converts Python integers to `tf.int32` and python floating
-point numbers to `tf.float32`. Otherwise TensorFlow uses the same rules numpy
-uses when converting to arrays.
+用 python 对象创建 `tf.Tensor` 时，可以选择指定数据类型。如果不指定数据类型，TensorFlow 会选择一个可以表示您的数据的数据类型。TensorFlow 会将 Python 整数转型为 `tf.int32`，并将 python 浮点数转型为 `tf.float32`。此外，TensorFlow 使用 Numpy 在转换至数组时使用的相同规则。
 
-## Evaluating Tensors
+## 评估张量
 
-Once the computation graph has been built, you can run the computation that
-produces a particular `tf.Tensor` and fetch the value assigned to it. This is
-often useful for debugging as well as being required for much of TensorFlow to
-work.
+计算图构建完毕后，您可以运行生成特定 `tf.Tensor` 的计算并获取分配给它的值。这对于程序调试通常很有帮助，也是 TensorFlow 的大部分功能正常运行所必需的。
 
-The simplest way to evaluate a Tensor is using the `Tensor.eval` method. For
-example:
+评估张量最简单的方法是使用 `Tensor.eval` 方法。例如：
 
 ```python
 constant = tf.constant([1, 2, 3])
@@ -268,15 +199,11 @@ tensor = constant * constant
 print(tensor.eval())
 ```
 
-The `eval` method only works when a default `tf.Session` is active (see
-Graphs and Sessions for more information).
+`eval` 方法仅在默认 `tf.Session` 处于活跃状态时才起作用（详情请参阅“图和会话”）。
 
-`Tensor.eval` returns a numpy array with the same contents as the tensor.
+`Tensor.eval` 会返回一个与张量内容相同的 NumPy 数组。
 
-Sometimes it is not possible to evaluate a `tf.Tensor` with no context because
-its value might depend on dynamic information that is not available. For
-example, tensors that depend on `placeholder`s can't be evaluated without
-providing a value for the `placeholder`.
+有时无法在没有背景信息的情况下评估 `tf.Tensor`，因为它的值可能取决于无法获取的动态信息。例如，在没有为 `placeholder` 提供值的情况下，无法评估依赖于 `placeholder` 的张量。
 
 ``` python
 p = tf.placeholder(tf.float32)
@@ -286,23 +213,16 @@ t.eval(feed_dict={p:2.0})  # This will succeed because we're feeding a value
                            # to the placeholder.
 ```
 
-Note that it is possible to feed any `tf.Tensor`, not just placeholders.
+请注意，可以提供任何 `tf.Tensor`，而不仅仅是占位符。
 
-Other model constructs might make evaluating a `tf.Tensor`
-complicated. TensorFlow can't directly evaluate `tf.Tensor`s defined inside
-functions or inside control flow constructs. If a `tf.Tensor` depends on a value
-from a queue, evaluating the `tf.Tensor` will only work once something has been
-enqueued; otherwise, evaluating it will hang. When working with queues, remember
-to call `tf.train.start_queue_runners` before evaluating any `tf.Tensor`s.
+其他模型构造可能会使评估 `tf.Tensor` 变得较为复杂。TensorFlow 无法直接评估在函数内部或控制流结构内部定义的 `tf.Tensor`。如果 `tf.Tensor` 取决于队列中的值，那么只有在某个项加入队列后才能评估 `tf.Tensor`；否则，评估将被搁置。在处理队列时，请先调用 `tf.train.start_queue_runners`，再评估任何 `tf.Tensor`。
 
-## Printing Tensors
+## 输出张量
 
-For debugging purposes you might want to print the value of a `tf.Tensor`. While
- [tfdbg](../guide/debugger.md) provides advanced debugging support, TensorFlow also has an
- operation to directly print the value of a `tf.Tensor`.
+出于调试目的，您可能需要输出 `tf.Tensor` 的值。虽然
+[tfdbg](/docs/tensorflow/guide/debugger) 提供高级调试支持，但 TensorFlow 也有一个操作可以直接输出 `tf.Tensor` 的值。
 
-Note that you rarely want to use the following pattern when printing a
-`tf.Tensor`:
+请注意，输出 `tf.Tensor` 时很少使用以下模式：
 
 ``` python
 t = <<some tensorflow operation>>
@@ -310,12 +230,9 @@ print(t)  # This will print the symbolic tensor when the graph is being built.
           # This tensor does not have a value in this context.
 ```
 
-This code prints the `tf.Tensor` object (which represents deferred computation)
-and not its value. Instead, TensorFlow provides the `tf.Print` operation, which
-returns its first tensor argument unchanged while printing the set of
-`tf.Tensor`s it is passed as the second argument.
+上述代码会输出 `tf.Tensor` 对象（表示延迟计算），而不是其值。TensorFlow 提供了 `tf.Print` 操作，该操作会返回其第一个张量参数（保持不变），同时输出作为第二个参数传递的 `tf.Tensor` 集合。
 
-To correctly use `tf.Print` its return value must be used. See the example below
+要正确使用 `tf.Print`，必须使用其返回的值。请参阅下文的示例：
 
 ``` python
 t = <<some tensorflow operation>>
@@ -324,7 +241,5 @@ t = tf.Print(t, [t])  # Here we are using the value returned by tf.Print
 result = t + 1  # Now when result is evaluated the value of `t` will be printed.
 ```
 
-When you evaluate `result` you will evaluate everything `result` depends
-upon. Since `result` depends upon `t`, and evaluating `t` has the side effect of
-printing its input (the old value of `t`), `t` gets printed.
+在评估 `result` 时，会评估所有影响 `result` 的元素。由于 `result` 依靠 `t`，而评估 `t` 会导致输出其输入（`t` 的旧值），所以系统会输出 `t`。
 
