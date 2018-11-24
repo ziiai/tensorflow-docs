@@ -1,36 +1,21 @@
-# Save and Restore
+# 保存和恢复
 
-The `tf.train.Saver` class provides methods to save and restore models. The
-`tf.saved_model.simple_save` function is an easy way to build a
-`tf.saved_model` suitable for serving. [Estimators](../guide/estimators.md)
-automatically save and restore variables in the `model_dir`.
+`tf.train.Saver` 类提供了保存和恢复模型的方法。通过 `tf.saved_model.simple_save` 函数可轻松地保存适合投入使用的模型。 Estimator 会自动保存和恢复 `model_dir` 中的变量。
 
-## Save and restore variables
+## 保存和恢复变量
 
-TensorFlow [Variables](../guide/variables.md) are the best way to represent shared, persistent state
-manipulated by your program. The `tf.train.Saver` constructor adds `save` and
-`restore` ops to the graph for all, or a specified list, of the variables in the
-graph.  The `Saver` object provides methods to run these ops, specifying paths
-for the checkpoint files to write to or read from.
+TensorFlow [Variables](../guide/variables.md) 是表示由程序操作的共享持久状态的最佳方法。tf.train.Saver 构造函数会针对图中所有变量或指定列表的变量将 save 和 restore 操作添加到图中。Saver 对象提供了运行这些操作的方法，并指定写入或读取检查点文件的路径。
 
-`Saver` restores all variables already defined in your model. If you're
-loading a model without knowing how to build its graph (for example, if you're
-writing a generic program to load models), then read the
-[Overview of saving and restoring models](#models) section
-later in this document.
+Saver 会恢复已经在模型中定义的所有变量。如果您在不知道如何构建图的情况下加载模型（例如，如果您要编写用于加载各种模型的通用程序），那么请阅读本文档后面的
+[保存和恢复模型概述](#models) 部分。
 
-TensorFlow saves variables in binary *checkpoint files* that map variable
-names to tensor values.
+TensorFlow 将变量保存在二进制检查点文件中，这类文件会将变量名称映射到张量值。
 
-Caution: TensorFlow model files are code. Be careful with untrusted code.
-See [Using TensorFlow Securely](https://github.com/tensorflow/tensorflow/blob/master/SECURITY.md)
-for details.
+注意：TensorFlow 模型文件是代码。请注意不可信的代码。详情请参阅[安全地使用 TensorFlow](https://github.com/tensorflow/tensorflow/blob/master/SECURITY.md)。
 
-### Save variables
+### 保存变量
 
-Create a `Saver` with `tf.train.Saver()` to manage all variables in the
-model. For example, the following snippet demonstrates how to call the
-`tf.train.Saver.save` method to save variables to checkpoint files:
+创建 `Saver`（使用 `tf.train.Saver()`）来管理模型中的所有变量。例如，以下代码段展示了如何调用 `tf.train.Saver.save` 方法以将变量保存到检查点文件中：
 
 ```python
 # Create some variables.
@@ -58,13 +43,9 @@ with tf.Session() as sess:
   print("Model saved in path: %s" % save_path)
 ```
 
-### Restore variables
+### 恢复变量
 
-The `tf.train.Saver` object not only saves variables to checkpoint files, it
-also restores variables. Note that when you restore variables you do not have
-to initialize them beforehand. For example, the following snippet demonstrates
-how to call the `tf.train.Saver.restore` method to restore variables from the
-checkpoint files:
+`tf.train.Saver` 对象不仅将变量保存到检查点文件中，还将恢复变量。请注意，当您恢复变量时，您不必事先将其初始化。例如，以下代码段展示了如何调用 `tf.train.Saver.restore` 方法以从检查点文件中恢复变量：
 
 ```python
 tf.reset_default_graph()
@@ -87,35 +68,22 @@ with tf.Session() as sess:
   print("v2 : %s" % v2.eval())
 ```
 
-Note: There is not a physical file called `/tmp/model.ckpt`. It is the *prefix* of
-filenames created for the checkpoint. Users only interact with the prefix
-instead of physical checkpoint files.
+> 注意：并没有名为 /tmp/model.ckpt 的实体文件。它是为检查点创建的文件名的前缀。用户仅与前缀（而非检查点实体文件）互动。
 
-### Choose variables to save and restore
+### 选择要保存和恢复的变量
 
-If you do not pass any arguments to `tf.train.Saver()`, the saver handles all
-variables in the graph.  Each variable is saved under the name that was passed
-when the variable was created.
+如果您没有向 `tf.train.Saver()` 传递任何参数，则 `Saver` 会处理图中的所有变量。每个变量都保存在创建变量时所传递的名称下。
 
-It is sometimes useful to explicitly specify names for variables in the
-checkpoint files.  For example, you may have trained a model with a variable
-named `"weights"` whose value you want to restore into a variable named
-`"params"`.
+在检查点文件中明确指定变量名称的这种做法有时会非常有用。例如，您可能已经使用名为`"weights"`的变量训练了一个模型，而您想要将该变量的值恢复到名为`"params"`的变量中。
 
-It is also sometimes useful to only save or restore a subset of the variables
-used by a model.  For example, you may have trained a neural net with five
-layers, and you now want to train a new model with six layers that reuses the
-existing weights of the five trained layers. You can use the saver to restore
-the weights of just the first five layers.
+有时候，仅保存或恢复模型使用的变量子集也会很有裨益。例如，您可能已经训练了一个五层的神经网络，现在您想要训练一个六层的新模型，并重用该五层的现有权重。您可以使用 `Saver` 只恢复这前五层的权重。
 
-You can easily specify the names and variables to save or load by passing to the
-`tf.train.Saver()` constructor either of the following:
+您可以通过向 `tf.train.Saver()` 构造函数传递以下任一内容，轻松指定要保存或加载的名称和变量：
 
-* A list of variables (which will be stored under their own names).
-* A Python dictionary in which keys are the names to use and the values are the
-variables to manage.
+- 变量列表（将以其本身的名称保存）。
+- Python 字典，其中，键是要使用的名称，键值是要管理的变量。
 
-Continuing from the save/restore examples shown earlier:
+继续前面所示的保存/恢复示例：
 
 ```python
 tf.reset_default_graph()
@@ -136,32 +104,22 @@ with tf.Session() as sess:
   print("v2 : %s" % v2.eval())
 ```
 
-Notes:
+注意：
 
-*  You can create as many `Saver` objects as you want if you need to save and
-   restore different subsets of the model variables.  The same variable can be
-   listed in multiple saver objects; its value is only changed when the
-   `Saver.restore()` method is run.
+- 如果要保存和恢复模型变量的不同子集，您可以根据需要创建任意数量的 `Saver` 对象。同一个变量可以列在多个 `Saver` 对象中，变量的值只有在 `Saver.restore()` 方法运行时才会更改。
 
-*  If you only restore a subset of the model variables at the start of a
-   session, you have to run an initialize op for the other variables.  See
-   `tf.variables_initializer` for more information.
+- 如果您在会话开始时仅恢复一部分模型变量，则必须为其他变量运行初始化操作。详情请参阅 `tf.variables_initializer`。
 
-*  To inspect the variables in a checkpoint, you can use the
-   [`inspect_checkpoint`](https://www.tensorflow.org/code/tensorflow/python/tools/inspect_checkpoint.py)
-   library, particularly the `print_tensors_in_checkpoint_file` function.
+- 要检查某个检查点中的变量，您可以使用 [`inspect_checkpoint`](https://www.tensorflow.org/code/tensorflow/python/tools/inspect_checkpoint.py)库，尤其是 `print_tensors_in_checkpoint_file` 函数。
 
-*  By default, `Saver` uses the value of the `tf.Variable.name` property
-   for each variable.  However, when you create a `Saver` object, you may
-   optionally choose names for the variables in the checkpoint files.
+- 默认情况下，`Saver` 会针对每个变量使用 `tf.Variable.name` 属性的值。但是，当您创建 `Saver` 对象时，您可以选择为检查点文件中的变量选择名称。
 
 
-### Inspect variables in a checkpoint
+### 检查某个检查点中的变量
 
-We can quickly inspect variables in a checkpoint with the
-[`inspect_checkpoint`](https://www.tensorflow.org/code/tensorflow/python/tools/inspect_checkpoint.py) library.
+我们可以使用 `inspect_checkpoint` 库快速检查某个检查点中的变量。
 
-Continuing from the save/restore examples shown earlier:
+继续前面所示的保存/恢复示例：
 
 ```python
 # import the inspect_checkpoint library
@@ -190,22 +148,16 @@ chkp.print_tensors_in_checkpoint_file("/tmp/model.ckpt", tensor_name='v2', all_t
 
 
 <a name="models"></a>
-## Save and restore models
+## 保存和恢复模型
 
-Use `SavedModel` to save and load your model—variables, the graph, and the
-graph's metadata. This is a language-neutral, recoverable, hermetic
-serialization format that enables higher-level systems and tools to produce,
-consume, and transform TensorFlow models. TensorFlow provides several ways to
-interact with `SavedModel`, including the `tf.saved_model` APIs,
-`tf.estimator.Estimator`, and a command-line interface.
+使用 `SavedModel` 保存和加载模型 - 变量、图和图的元数据。`SavedModel` 是一种独立于语言且可恢复的神秘序列化格式，使较高级别的系统和工具可以创建、使用和转换 TensorFlow 模型。TensorFlow 提供了多种与 `SavedModel` 交互的方式，包括 `tf.saved_model` API、`tf.estimator.Estimator` 和命令行界面。
 
 
-## Build and load a SavedModel
+## 构建和加载 SavedModel
 
-### Simple save
+### 简单保存
 
-The easiest way to create a `SavedModel` is to use the `tf.saved_model.simple_save`
-function:
+创建 `SavedModel` 的最简单方法是使用 `tf.saved_model.simple_save` 函数：
 
 ```python
 simple_save(session,
@@ -214,37 +166,22 @@ simple_save(session,
             outputs={"z": z})
 ```
 
-This configures the `SavedModel` so it can be loaded by
-[TensorFlow serving](/serving/serving_basic) and supports the
-[Predict API](https://github.com/tensorflow/serving/blob/master/tensorflow_serving/apis/predict.proto).
-To access the classify, regress, or multi-inference APIs, use the manual
-`SavedModel` builder APIs or an `tf.estimator.Estimator`.
+这样可以配置 `SavedModel`，使其能够通过
+[TensorFlow serving](/serving/serving_basic) 进行加载，并支持
+[Predict API](https://github.com/tensorflow/serving/blob/master/tensorflow_serving/apis/predict.proto)。
+要访问 `classify` API、`regress` API 或 `multi-inference` API，请使用手动 `SavedModel builder` API 或 `tf.estimator.Estimator`。
 
-### Manually build a SavedModel
+### 手动构建 SavedModel
 
-If your use case isn't covered by `tf.saved_model.simple_save`, use the manual
-`tf.saved_model.builder` to create a `SavedModel`.
+如果您的用例不在 `tf.saved_model.simple_save` 涵盖范围内，请使用手动 `builder` API 创建 `SavedModel`。
 
-The `tf.saved_model.builder.SavedModelBuilder` class provides functionality to
-save multiple `MetaGraphDef`s.  A **MetaGraph** is a dataflow graph, plus
-its associated variables, assets, and signatures.  A **`MetaGraphDef`**
-is the protocol buffer representation of a MetaGraph.  A **signature** is
-the set of inputs to and outputs from a graph.
+`tf.saved_model.builder.SavedModelBuilder` 类提供了保存多个 `MetaGraphDef` 的功能。`MetaGraph` 是一种数据流图，并包含相关变量、资源和签名。`MetaGraphDef` 是 `MetaGraph` 的协议缓冲区表示法。签名是一组与图有关的输入和输出。
 
-If assets need to be saved and written or copied to disk, they can be provided
-when the first `MetaGraphDef` is added. If multiple `MetaGraphDef`s are
-associated with an asset of the same name, only the first version is retained.
+如果需要将资源保存并写入或复制到磁盘，则可以在首次添加 `MetaGraphDef` 时提供这些资源。如果多个 `MetaGraphDef` 与同名资源相关联，则只保留首个版本。
 
-Each `MetaGraphDef` added to the SavedModel must be annotated with
-user-specified tags. The tags provide a means to identify the specific
-`MetaGraphDef` to load and restore, along with the shared set of variables
-and assets. These tags
-typically annotate a `MetaGraphDef` with its functionality (for example,
-serving or training), and optionally with hardware-specific aspects (for
-example, GPU).
+必须使用用户指定的标签对每个添加到 `SavedModel` 的 `MetaGraphDef` 进行标注。这些标签提供了一种方法来识别要加载和恢复的特定 `MetaGraphDef`，以及共享的变量和资源子集。这些标签一般会标注 `MetaGraphDef` 的功能（例如服务或训练），有时也会标注特定的硬件方面的信息（如 GPU）。
 
-For example, the following code suggests a typical way to use
-`SavedModelBuilder` to build a SavedModel:
+例如，以下代码展示了使用 `SavedModelBuilder` 构建 `SavedModel` 的典型方法：
 
 ```python
 export_dir = ...
@@ -267,53 +204,32 @@ builder.save()
 ```
 
 <a name="forward_compatibility"></a>
-#### Forward compatibility via `strip_default_attrs=True`
+#### 通过 `strip_default_attrs=True` 确保向前兼容性
 
-Following the guidance below gives you forward compatibility only if the set of
-Ops has not changed.
+只有在操作集没有变化的情况下，遵循以下指南才能带来向前兼容性。
 
-The `tf.saved_model.builder.SavedModelBuilder` class allows
-users to control whether default-valued attributes must be stripped from the
+`SavedModelBuilder` 类允许用户控制在将元图添加到 SavedModel 软件包时，是否必须从
 [`NodeDefs`](../extend/tool_developers/index.md#nodes)
-while adding a meta graph to the SavedModel bundle. Both
-`tf.saved_model.builder.SavedModelBuilder.add_meta_graph_and_variables`
-and `tf.saved_model.builder.SavedModelBuilder.add_meta_graph`
-methods accept a Boolean flag `strip_default_attrs` that controls this behavior.
+剥离默认值属性。`SavedModelBuilder.add_meta_graph_and_variables` 和 `SavedModelBuilder.add_meta_graph` 方法都接受控制此行为的布尔标记 `strip_default_attrs`。
 
-If `strip_default_attrs` is `False`, the exported `tf.MetaGraphDef` will have
-the default valued attributes in all its `tf.NodeDef` instances.
-This can break forward compatibility with a sequence of events such as the
-following:
+如果 `strip_default_attrs` 为 `False`，则导出的 `tf.MetaGraphDef` 将在其所有 `tf.NodeDef` 实例中具有设为默认值的属性。这样会破坏向前兼容性并出现一系列事件，例如：
 
-*  An existing Op (`Foo`) is updated to include a new attribute (`T`) with a
-   default (`bool`) at version 101.
-*  A model producer such as a "trainer binary" picks up this change (version 101)
-   to the `OpDef` and re-exports an existing model that uses Op `Foo`.
-*  A model consumer (such as [Tensorflow Serving](/serving)) running an older
-   binary (version 100) doesn't have attribute `T` for Op `Foo`, but tries to
-   import this model. The model consumer doesn't recognize attribute `T` in a
-   `NodeDef` that uses Op `Foo` and therefore fails to load the model.
-*  By setting `strip_default_attrs` to True, the model producers can strip away
-   any default valued attributes in the `NodeDefs`. This helps ensure that newly
-   added attributes with defaults don't cause older model consumers to fail
-   loading models regenerated with newer training binaries.
+- 现有的操作 (`Foo`) 会更新为在版本 101 中包含具有默认 (`bool`) 的新属性 (`T`)。
+- 诸如“训练方二进制文件”之类的模型提供方将此更改（版本 101）提交给 `OpDef` 并重新导出使用操作 `Foo` 的现有模型。
+- 运行较旧二进制文件（版本 100）的模型使用方（例如 [Tensorflow Serving](https://tensorflow.google.cn/serving)）在操作 `Foo` 中没有属性 `T`，但会尝试导入此模型。模型使用方无法在使用操作 `Foo` 的 `NodeDef` 中识别属性 `T`，因此无法加载模型。
+- 通过将 `strip_default_attrs` 设置为 `True`，模型提供方可以剥离 `NodeDefs` 中任何具有默认值的属性。这有助于确保新添加的属性（具有默认值）不会导致早期的模型使用方无法加载使用较新的训练二进制文件重新生成的模型。
 
-See [compatibility guidance](./version_compat.md)
-for more information.
+详情请参阅[兼容性指南](./version_compat.md)。
 
-### Loading a SavedModel in Python
+### 加载 Python 版 SavedModel
 
-The Python version of the SavedModel
-`tf.saved_model.loader`
-provides load and restore capability for a SavedModel. The `load` operation
-requires the following information:
+Python 版的 `SavedModel` 加载器为 `SavedModel` 提供加载和恢复功能。`load` 指令需要以下信息：
 
-* The session in which to restore the graph definition and variables.
-* The tags used to identify the MetaGraphDef to load.
-* The location (directory) of the SavedModel.
+- 要在其中恢复图定义和变量的会话。
+- 用于标识要加载的 `MetaGraphDef` 的标签。
+- `SavedModel` 的位置（目录）。
 
-Upon a load, the subset of variables, assets, and signatures supplied as part of
-the specific MetaGraphDef will be restored into the supplied session.
+加载后，作为特定 `MetaGraphDef` 的一部分提供的变量、资源和签名子集将恢复到提供的会话中。
 
 
 ```python
@@ -325,15 +241,11 @@ with tf.Session(graph=tf.Graph()) as sess:
 ```
 
 
-### Load a SavedModel in C++
+### 加载 C++ 版 SavedModel
 
-The C++ version of the SavedModel
-[loader](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/cc/saved_model/loader.h)
-provides an API to load a SavedModel from a path, while allowing
-`SessionOptions` and `RunOptions`.
-You have to specify the tags associated with the graph to be loaded.
-The loaded version of SavedModel is referred to as `SavedModelBundle`
-and contains the MetaGraphDef and the session within which it is loaded.
+C++ 版的 `SavedModel`
+[加载器](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/cc/saved_model/loader.h)
+提供了一个可从某个路径加载 `SavedModel` 的 API（同时允许 `SessionOptions` 和 `RunOptions`）。您必须指定与要加载的图相关联的标签。`SavedModel` 加载后的版本称为 `SavedModelBundle`，其中包含 `MetaGraphDef` 和加载时所在的会话。
 
 ```c++
 const string export_dir = ...
@@ -343,105 +255,65 @@ LoadSavedModel(session_options, run_options, export_dir, {kSavedModelTagTrain},
                &bundle);
 ```
 
-### Load and serve a SavedModel in TensorFlow serving
+### 在 TensorFlow Serving 中加载和提供 SavedModel
 
-You can easily load and serve a SavedModel with the TensorFlow Serving Model
-Server binary. See [instructions](https://www.tensorflow.org/serving/setup#installing_using_apt-get)
-on how to install the server, or build it if you wish.
+您可以使用 TensorFlow Serving Model Server 二进制文件轻松加载和提供 SavedModel。参阅[此处](https://www.tensorflow.org/serving/setup#installing_using_apt-get)的说明，了解如何安装服务器，或根据需要创建服务器。
 
-Once you have the Model Server, run it with:
+一旦您的 Model Server 就绪，请运行以下内容：   
 ```
 tensorflow_model_server --port=port-numbers --model_name=your-model-name --model_base_path=your_model_base_path
 ```
-Set the port and model_name flags to values of your choosing. The
-model_base_path flag expects to be to a base directory, with each version of
-your model residing in a numerically named subdirectory. If you only have a
-single version of your model, simply place it in a subdirectory like so:
-* Place the model in /tmp/model/0001
-* Set model_base_path to /tmp/model
+将 port 和 model_name 标记设为您所选的值。`model_base_path` 标记应为基本目录，每个版本的模型都放置于以数字命名的子目录中。如果您的模型只有一个版本，只需如下所示地将其放在子目录中即可：
+* 将模型放入 `/tmp/model/0001`
+* 将 `model_base_path` 设为 `/tmp/model`
 
-Store different versions of your model in numerically named subdirectories of a
-common base directory. For example, suppose the base directory is `/tmp/model`.
-If you have only one version of your model, store it in `/tmp/model/0001`. If
-you have two versions of your model, store the second version in
-`/tmp/model/0002`, and so on.  Set the `--model-base_path` flag to the base
-directory (`/tmp/model`, in this example).  TensorFlow Model Server will serve
-the model in the highest numbered subdirectory of that base directory.
+将模型的不同版本存储在共用基本目录的子目录中（以数字命名）。例如，假设基本目录是 `/tmp/model`。如果您的模型只有一个版本，请将其存储在 `/tmp/model/0001` 中。如果您的模型有两个版本，请将第二个版本存储在 `/tmp/model/0002` 中，以此类推。将 `--model-base_path` 标记设为基本目录（在本例中为 `/tmp/model`）。TensorFlow Model Server 将在该基本目录的最大编号的子目录中提供模型。
 
-### Standard constants
+### 标准常量
 
-SavedModel offers the flexibility to build and load TensorFlow graphs for a
-variety of use-cases. For the most common use-cases, SavedModel's APIs
-provide a set of constants in Python and C++ that are easy to
-reuse and share across tools consistently.
+SavedModel 为各种用例构建和加载 TensorFlow 图提供了灵活性。对于最常见的用例，SavedModel 的 API 在 Python 和 C++ 中提供了一组易于重复使用且便于在各种工具中共享的常量。
 
-#### Standard MetaGraphDef tags
+#### 标准 MetaGraphDef 标签
 
-You may use sets of tags to uniquely identify a `MetaGraphDef` saved in a
-SavedModel. A subset of commonly used tags is specified in:
+您可以使用标签组唯一标识保存在 SavedModel 中的 `MetaGraphDef`。常用标签的子集规定如下：
 
 * [Python](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/saved_model/tag_constants.py)
 * [C++](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/cc/saved_model/tag_constants.h)
 
 
-#### Standard SignatureDef constants
+#### 标准 SignatureDef 常量
 
-A [**SignatureDef**](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/protobuf/meta_graph.proto)
-is a protocol buffer that defines the signature of a computation
-supported by a graph.
-Commonly used input keys, output keys, and method names are
-defined in:
+[**SignatureDef**](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/protobuf/meta_graph.proto)
+是一个协议缓冲区，用于定义图所支持的计算的签名。常用的输入键、输出键和方法名称定义如下：
 
 * [Python](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/saved_model/signature_constants.py)
 * [C++](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/cc/saved_model/signature_constants.h)
 
-## Using SavedModel with Estimators
+## 搭配 Estimator 使用 SavedModel
 
-After training an `Estimator` model, you may want to create a service
-from that model that takes requests and returns a result.  You can run such a
-service locally on your machine or deploy it in the cloud.
+训练 `Estimator` 模型之后，您可能需要使用该模型创建服务来接收请求并返回结果。您可以在本机运行此类服务，或在云端部署该服务。
 
-To prepare a trained Estimator for serving, you must export it in the standard
-SavedModel format. This section explains how to:
+要准备一个训练过的 Estimator 以供使用，您必须以标准 SavedModel 格式导出它。本节介绍了如何进行以下操作：
 
-* Specify the output nodes and the corresponding
-  [APIs](https://github.com/tensorflow/serving/blob/master/tensorflow_serving/apis/prediction_service.proto)
-  that can be served (Classify, Regress, or Predict).
-* Export your model to the SavedModel format.
-* Serve the model from a local server and request predictions.
+- 指定可以投入使用的输出节点和相应的 [API](https://github.com/tensorflow/serving/blob/master/tensorflow_serving/apis/prediction_service.proto)（Classify API、Regress API 或 Predict API）。
+- 将模型导出为 `SavedModel` 格式。
+- 从本地服务器提供模型并请求预测。
 
 
-### Prepare serving inputs
+### 准备提供输入
 
-During training, an [`input_fn()`](../guide/premade_estimators.md#input_fn) ingests data
-and prepares it for use by the model.  At serving time, similarly, a
-`serving_input_receiver_fn()` accepts inference requests and prepares them for
-the model.  This function has the following purposes:
+在训练期间，[`input_fn()`](../guide/premade_estimators.md#input_fn) 会提取数据，并准备好数据以供模型使用。在提供服务期间，类似地，`serving_input_receiver_fn()` 接受推理请求，并为模型做好准备。该函数具有以下用途：
 
-*  To add placeholders to the graph that the serving system will feed
-   with inference requests.
-*  To add any additional ops needed to convert data from the input format
-   into the feature `Tensor`s expected by the model.
+- 在投入使用系统将向其发出推理请求的图中添加占位符。
+- 添加将数据从输入格式转换为模型所预期的特征 Tensor 所需的任何额外操作。
 
-The function returns a `tf.estimator.export.ServingInputReceiver` object,
-which packages the placeholders and the resulting feature `Tensor`s together.
+该函数返回一个 `tf.estimator.export.ServingInputReceiver` 对象，该对象会将占位符和生成的特征 `Tensor` 打包在一起。
 
-A typical pattern is that inference requests arrive in the form of serialized
-`tf.Example`s, so the `serving_input_receiver_fn()` creates a single string
-placeholder to receive them.  The `serving_input_receiver_fn()` is then also
-responsible for parsing the `tf.Example`s by adding a `tf.parse_example` op to
-the graph.
+典型的模式是推理请求以序列化 `tf.Example` 的形式到达，因此 `serving_input_receiver_fn()` 创建单个字符串占位符来接收它们。`serving_input_receiver_fn()` 接着也负责解析 `tf.Example`（通过向图中添加 `tf.parse_example` 操作）。
 
-When writing such a `serving_input_receiver_fn()`, you must pass a parsing
-specification to `tf.parse_example` to tell the parser what feature names to
-expect and how to map them to `Tensor`s. A parsing specification takes the
-form of a dict from feature names to `tf.FixedLenFeature`, `tf.VarLenFeature`,
-and `tf.SparseFeature`.  Note this parsing specification should not include
-any label or weight columns, since those will not be available at serving
-time&mdash;in contrast to a parsing specification used in the `input_fn()` at
-training time.
+在编写此类 `serving_input_receiver_fn()` 时，您必须将解析规范传递给 `tf.parse_example`，告诉解析器可能会遇到哪些特征名称以及如何将它们映射到 `Tensor`。解析规范采用字典的形式，即从特征名称映射到 `tf.FixedLenFeature`、`tf.VarLenFeature` 和 `tf.SparseFeature`。请注意，此解析规范不应包含任何标签或权重列，因为这些列在服务时间将不可用（与 `input_fn()` 在训练时使用的解析规范相反）。
 
-In combination, then:
+然后结合如下：
 
 ```py
 feature_spec = {'foo': tf.FixedLenFeature(...),
@@ -457,120 +329,72 @@ def serving_input_receiver_fn():
   return tf.estimator.export.ServingInputReceiver(features, receiver_tensors)
 ```
 
-The `tf.estimator.export.build_parsing_serving_input_receiver_fn` utility
-function provides that input receiver for the common case.
+`tf.estimator.export.build_parsing_serving_input_receiver_fn` 效用函数提供了适用于普遍情况的输入接收器。
 
-> Note: when training a model to be served using the Predict API with a local
-> server, the parsing step is not needed because the model will receive raw
-> feature data.
+> 注意：在使用 Predict API 和本地服务器训练要投入使用的模型时，并不需要解析步骤，因为该模型将接收原始特征数据。
 
-Even if you require no parsing or other input processing&mdash;that is, if the
-serving system will feed feature `Tensor`s directly&mdash;you must still provide
-a `serving_input_receiver_fn()` that creates placeholders for the feature
-`Tensor`s and passes them through.  The
-`tf.estimator.export.build_raw_serving_input_receiver_fn` utility provides for
-this.
+即使您不需要解析或其他输入处理，也就是说，如果服务系统直接提供特征 `Tensor`，您仍然必须提供一个 `serving_input_receiver_fn()` 来为特征 `Tensor` 创建占位符并在其中传递占位符。`tf.estimator.export.build_raw_serving_input_receiver_fn` 效用函数实现了这一功能。
 
-If these utilities do not meet your needs, you are free to write your own
-`serving_input_receiver_fn()`.  One case where this may be needed is if your
-training `input_fn()` incorporates some preprocessing logic that must be
-recapitulated at serving time.  To reduce the risk of training-serving skew, we
-recommend encapsulating such processing in a function which is then called
-from both `input_fn()` and `serving_input_receiver_fn()`.
+如果这些效用函数不能满足您的需求，您可以自由编写 `serving_input_receiver_fn()`。可能需要此方法的一种情况是，如果您训练的 `input_fn()` 包含某些必须在服务时间重演的预处理逻辑。为了减轻训练服务倾斜的风险，我们建议将这种处理封装在一个函数内，此函数随后将从 `input_fn()` 和 `serving_input_receiver_fn()` 两者中被调用。
 
-Note that the `serving_input_receiver_fn()` also determines the *input*
-portion of the signature.  That is, when writing a
-`serving_input_receiver_fn()`, you must tell the parser what signatures
-to expect and how to map them to your model's expected inputs.
-By contrast, the *output* portion of the signature is determined by the model.
+请注意，`serving_input_receiver_fn()` 也决定了签名的输入部分。也就是说，在编写 `serving_input_receiver_fn()` 时，必须告诉解析器哪些有哪些签名可能出现，以及如何将它们映射到模型的预期输入。相反，签名的输出部分由模型决定。
 
 <a name="specify_outputs"></a>
-### Specify the outputs of a custom model
+### 指定自定义模型的输出
 
-When writing a custom `model_fn`, you must populate the `export_outputs` element
-of the `tf.estimator.EstimatorSpec` return value. This is a dict of
-`{name: output}` describing the output signatures to be exported and used during
-serving.
+编写自定义 `model_fn` 时，必须填充 `export_outputs` 元素（属于 `tf.estimator.EstimatorSpec` 返回值）。这是 `{name: output}` 描述在服务期间输出和使用的输出签名的词典。
 
-In the usual case of making a single prediction, this dict contains
-one element, and the `name` is immaterial.  In a multi-headed model, each head
-is represented by an entry in this dict.  In this case the `name` is a string
-of your choice that can be used to request a specific head at serving time.
+在进行单一预测的通常情况下，该词典包含一个元素，而且 `name` 不重要。在一个多头模型中，每个头部都由这个词典中的一个条目表示。在这种情况下，`name` 是一个您所选择的字符串，用于在服务时间内请求特定头部。
 
-Each `output` value must be an `ExportOutput` object  such as
-`tf.estimator.export.ClassificationOutput`,
-`tf.estimator.export.RegressionOutput`, or
-`tf.estimator.export.PredictOutput`.
+每个 `output` 值必须是一个 `ExportOutput` 对象，例如 `tf.estimator.export.ClassificationOutput`、`tf.estimator.export.RegressionOutput` 或 `tf.estimator.export.PredictOutput`。
 
-These output types map straightforwardly to the
-[TensorFlow Serving APIs](https://github.com/tensorflow/serving/blob/master/tensorflow_serving/apis/prediction_service.proto),
-and so determine which request types will be honored.
+这些输出类型直接映射到
+[TensorFlow Serving API](https://github.com/tensorflow/serving/blob/master/tensorflow_serving/apis/prediction_service.proto)，并确定将支持哪些请求类型。
 
-Note: In the multi-headed case, a `SignatureDef` will be generated for each
-element of the `export_outputs` dict returned from the model_fn, named using
-the same keys.  These `SignatureDef`s differ only in their outputs, as
-provided by the corresponding `ExportOutput` entry.  The inputs are always
-those provided by the `serving_input_receiver_fn`.
-An inference request may specify the head by name.  One head must be named
-using [`signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY`](https://www.tensorflow.org/code/tensorflow/python/saved_model/signature_constants.py)
-indicating which `SignatureDef` will be served when an inference request
-does not specify one.
+Note: 注意：在多头情况下，系统将为从 model_fn 返回的 export_outputs 字典的每个元素生成 SignatureDef，这些元素都以相同的键命名。这些 SignatureDef 仅在输出（由相应的 ExportOutput 条目提供）方面有所不同。输入始终是由 serving_input_receiver_fn 提供的。推理请求可以按名称指定头部。一个头部必须使用
+[`signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY`](https://www.tensorflow.org/code/tensorflow/python/saved_model/signature_constants.py)
+命名，表示在推理请求没有指定 SignatureDef 时将提供哪一个 SignatureDef。
 
 <a name="perform_export"></a>
-### Perform the export
+### 导出 Estimator
 
-To export your trained Estimator, call
-`tf.estimator.Estimator.export_savedmodel` with the export base path and
-the `serving_input_receiver_fn`.
+要导出已训练的 Estimator，请调用 `tf.estimator.Estimator.export_savedmodel` 并提供导出基本路径和 `serving_input_receiver_fn`。
 
 ```py
 estimator.export_savedmodel(export_dir_base, serving_input_receiver_fn,
                             strip_default_attrs=True)
 ```
 
-This method builds a new graph by first calling the
-`serving_input_receiver_fn()` to obtain feature `Tensor`s, and then calling
-this `Estimator`'s `model_fn()` to generate the model graph based on those
-features. It starts a fresh `Session`, and, by default, restores the most recent
-checkpoint into it.  (A different checkpoint may be passed, if needed.)
-Finally it creates a time-stamped export directory below the given
-`export_dir_base` (i.e., `export_dir_base/<timestamp>`), and writes a
-SavedModel into it containing a single `MetaGraphDef` saved from this
-Session.
+该方法通过以下方式构建新图：首先调用 `serving_input_receiver_fn()` 以获得特征 `Tensor`，然后调用此 Estimator 的 `model_fn()`，以基于这些特征生成模型图。它会重新启动 `Session`，并且默认情况下会将最近的检查点恢复到它（如果需要，可以传递不同的检查点）。最后，它在给定的 `export_dir_base`（即 `export_dir_base/<timestamp>`）下面创建一个带时间戳的导出目录，并将 `SavedModel` 写入其中，其中包含从此会话中保存的单个 `MetaGraphDef`。
 
-> Note: It is your responsibility to garbage-collect old exports.
-> Otherwise, successive exports will accumulate under `export_dir_base`.
+> 注意：您负责对先前的导出操作进行垃圾回收。否则，连续导出将在 `export_dir_base` 下累积垃圾资源。
 
-### Serve the exported model locally
+### 在本地提供导出的模型
 
-For local deployment, you can serve your model using
-[TensorFlow Serving](https://github.com/tensorflow/serving), an open-source project that loads a
-SavedModel and exposes it as a [gRPC](https://www.grpc.io/) service.
+对于本地部署，您可以使用
+[TensorFlow Serving](https://github.com/tensorflow/serving)提供模型，TensorFlow Serving 是一个开源项目，用于加载 SavedModel 并将其公开为
+[gRPC](https://www.grpc.io/) 服务。
 
-First, [install TensorFlow Serving](https://github.com/tensorflow/serving).
+首先，[安装 TensorFlow Serving](https://github.com/tensorflow/serving)。
 
-Then build and run the local model server, substituting `$export_dir_base` with
-the path to the SavedModel you exported above:
+然后构建并运行本地模型服务器，用上面导出的指向 SavedModel 的路径替换 `$export_dir_base`：
 
 ```sh
 bazel build //tensorflow_serving/model_servers:tensorflow_model_server
 bazel-bin/tensorflow_serving/model_servers/tensorflow_model_server --port=9000 --model_base_path=$export_dir_base
 ```
 
-Now you have a server listening for inference requests via gRPC on port 9000!
+现在您有一台服务器在端口 9000 上通过 gRPC 监听推理请求了！
 
 
-### Request predictions from a local server
+### 从本地服务器请求预测
 
-The server responds to gRPC requests according to the
+服务器根据
 [PredictionService](https://github.com/tensorflow/serving/blob/master/tensorflow_serving/apis/prediction_service.proto#L15)
-gRPC API service definition.  (The nested protocol buffers are defined in
-various [neighboring files](https://github.com/tensorflow/serving/blob/master/tensorflow_serving/apis)).
+gRPC API 服务定义对 gRPC 请求做出响应（嵌套协议缓冲区在各种
+[neighboring files](https://github.com/tensorflow/serving/blob/master/tensorflow_serving/apis)中定义）。
 
-From the API service definition, the gRPC framework generates client libraries
-in various languages providing remote access to the API.  In a project using the
-Bazel build tool, these libraries are built automatically and provided via
-dependencies like these (using Python for example):
+根据 API 服务定义，gRPC 框架以各种语言生成客户端库，提供对 API 的远程访问。在使用 Bazel 构建工具的项目中，这些库是自动构建的，并通过以下关联项提供（以 Python 为例）：
 
 ```build
   deps = [
@@ -581,7 +405,7 @@ dependencies like these (using Python for example):
   ]
 ```
 
-Python client code can then import the libraries thus:
+然后，Python 客户端代码可以导入这些库：
 
 ```py
 from tensorflow_serving.apis import classification_pb2
@@ -590,15 +414,10 @@ from tensorflow_serving.apis import predict_pb2
 from tensorflow_serving.apis import prediction_service_pb2
 ```
 
-> Note: `prediction_service_pb2` defines the service as a whole and so
-> is always required.  However a typical client will need only one of
-> `classification_pb2`, `regression_pb2`, and `predict_pb2`, depending on the
-> type of requests being made.
+> 注意：prediction_service_pb2 将服务定义为一个整体，因此始终是必需的。然而一个典型的客户端只需要 classification_pb2、regression_pb2 和 predict_pb2 中的一个，取决于所做请求的类型。
 
-Sending a gRPC request is then accomplished by assembling a protocol buffer
-containing the request data and passing it to the service stub.  Note how the
-request protocol buffer is created empty and then populated via the
-[generated protocol buffer API](https://developers.google.com/protocol-buffers/docs/reference/python-generated).
+通过在协议缓冲区聚集请求数据并将其传递给服务存根即可完成 gRPC 请求的发送。请注意观察请求协议缓冲区是如何创建为空区的，然后是如何通过
+[生成的协议缓冲区 API](https://developers.google.com/protocol-buffers/docs/reference/python-generated) 填充的。
 
 ```py
 from grpc.beta import implementations
@@ -613,23 +432,12 @@ example.features.feature['x'].float_list.value.extend(image[0].astype(float))
 result = stub.Classify(request, 10.0)  # 10 secs timeout
 ```
 
-The returned result in this example is a `ClassificationResponse` protocol
-buffer.
+本例中返回的结果是一个 `ClassificationResponse` 协议缓冲区。
 
-This is a skeletal example; please see the [Tensorflow Serving](../deploy/index.md)
-documentation and [examples](https://github.com/tensorflow/serving/tree/master/tensorflow_serving/example)
-for more details.
+这是一个概括性示例；详情请参阅 [Tensorflow Serving](../deploy/index.md)
+文档和[示例](https://github.com/tensorflow/serving/tree/master/tensorflow_serving/example)。
 
-> Note: `ClassificationRequest` and `RegressionRequest` contain a
-> `tensorflow.serving.Input` protocol buffer, which in turn contains a list of
-> `tensorflow.Example` protocol buffers.  `PredictRequest`, by contrast,
-> contains a mapping from feature names to values encoded via `TensorProto`.
-> Correspondingly: When using the `Classify` and `Regress` APIs, TensorFlow
-> Serving feeds serialized `tf.Example`s to the graph, so your
-> `serving_input_receiver_fn()` should include a `tf.parse_example()` Op.
-> When using the generic `Predict` API, however, TensorFlow Serving feeds raw
-> feature data to the graph, so a pass through `serving_input_receiver_fn()`
-> should be used.
+> 注意：ClassificationRequest 和 RegressionRequest 包含一个 tensorflow.serving.Input 协议缓冲区，该协议缓冲区又包含一系列 tensorflow.Example 协议缓冲区。而与之不同的是，PredictRequest 包含从特征名称到用 TensorProto 进行编码的值的映射。相应地，使用 Classify 和 Regress API 时，TensorFlow Serving 会将序列化 tf.Example 馈送到图中，所以 serving_input_receiver_fn() 应该包含一个 tf.parse_example() 操作。但是如果使用通用 Predict API，TensorFlow Serving 会将原始特征数据馈送到图中，因此应该使用 serving_input_receiver_fn() 进行传递。
 
 
 <!-- TODO(soergel): give examples of making requests against this server, using
@@ -641,61 +449,46 @@ from contrib to core. -->
 
 
 
-## CLI to inspect and execute SavedModel
+## 使用 CLI 检查并执行 SavedModel
 
-You can use the SavedModel Command Line Interface (CLI) to inspect and
-execute a SavedModel.
-For example, you can use the CLI to inspect the model's `SignatureDef`s.
-The CLI enables you to quickly confirm that the input
-[Tensor dtype and shape](../guide/tensors.md) match the model. Moreover, if you
-want to test your model, you can use the CLI to do a sanity check by
-passing in sample inputs in various formats (for example, Python
-expressions) and then fetching the output.
+您可以使用 SavedModel 命令行界面 (CLI) 检查并执行 `SavedModel`。例如，您可以使用 CLI 检查模型的 `SignatureDef`。CLI 让您能够快速确认输入的
+[Tensor dtype 和形状](../guide/tensors.md)是否与模型匹配。此外，如果您想测试模型，可以使用 CLI 进行健全性检查，方法是传入各种格式的示例输入（如 Python 表达式），然后获取输出。
 
 
-### Install the SavedModel CLI
+### 安装 SavedModel CLI
 
-Broadly speaking, you can install TensorFlow in either of the following
-two ways:
+一般来说，您可以通过以下两种方式之一安装 TensorFlow：
 
-*  By installing a pre-built TensorFlow binary.
-*  By building TensorFlow from source code.
+- 通过安装预构建的 TensorFlow 二进制文件。
+- 通过从源代码构建 TensorFlow。
 
-If you installed TensorFlow through a pre-built TensorFlow binary,
-then the SavedModel CLI is already installed on your system
-at pathname `bin\saved_model_cli`.
+如果您通过预构建的 TensorFlow 二进制文件安装了 TensorFlow，则您的系统上已经安装 SavedModel CLI（路径名称为：`bin\saved_model_cli`）。
 
-If you built TensorFlow from source code, you must run the following
-additional command to build `saved_model_cli`:
+如果您从源代码构建 TensorFlow，则必须运行以下附加命令来构建 `saved_model_cli`：
 
 ```
 $ bazel build tensorflow/python/tools:saved_model_cli
 ```
 
-### Overview of commands
+### 命令概述
 
-The SavedModel CLI supports the following two commands on a
-`MetaGraphDef` in a SavedModel:
+SavedModel CLI 在 `SavedModel` 中 `MetaGraphDef` 上支持以下两个命令：
 
-* `show`, which shows a computation on a `MetaGraphDef` in a SavedModel.
-* `run`, which runs a computation on a `MetaGraphDef`.
+- `show`，显示在 `SavedModel` 中 `MetaGraphDef` 上的计算。
+- `run`，在 `MetaGraphDef` 上运行计算。
 
 
-### `show` command
 
-A SavedModel contains one or more `MetaGraphDef`s, identified by their tag-sets.
-To serve a model, you
-might wonder what kind of `SignatureDef`s are in each model, and what are their
-inputs and outputs.  The `show` command let you examine the contents of the
-SavedModel in hierarchical order.  Here's the syntax:
+### `show` 命令
+
+`SavedModel` 包含一个或多个 `MetaGraphDef`，由其标签集进行标识。要提供模型，您可能想知道每个模型中的 `SignatureDef` 是什么类型的，它们的输入和输出是什么。`show` 命令可让您按层次顺序检查 `SavedModel` 的内容。语法如下：
 
 ```
 usage: saved_model_cli show [-h] --dir DIR [--all]
 [--tag_set TAG_SET] [--signature_def SIGNATURE_DEF_KEY]
 ```
 
-For example, the following command shows all available
-MetaGraphDef tag-sets in the SavedModel:
+例如，以下命令显示 SavedModel 中所有可用的 MetaGraphDef 的标签集：
 
 ```
 $ saved_model_cli show --dir /tmp/saved_model_dir
@@ -704,8 +497,7 @@ serve
 serve, gpu
 ```
 
-The following command shows all available `SignatureDef` keys in
-a `MetaGraphDef`:
+以下命令会显示 `MetaGraphDef` 中所有可用的 `SignatureDef` 键：
 
 ```
 $ saved_model_cli show --dir /tmp/saved_model_dir --tag_set serve
@@ -719,17 +511,13 @@ SignatureDef key: "regress_x_to_y2"
 SignatureDef key: "serving_default"
 ```
 
-If a `MetaGraphDef` has *multiple* tags in the tag-set, you must specify
-all tags, each tag separated by a comma. For example:
+如果 `MetaGraphDef` 在标记集中有多个标记，则您必须指定所有标记，每个标记用英文逗号分隔。例如：
 
 ```none
 $ saved_model_cli show --dir /tmp/saved_model_dir --tag_set serve,gpu
 ```
 
-To show all inputs and outputs TensorInfo for a specific `SignatureDef`, pass in
-the `SignatureDef` key to `signature_def` option. This is very useful when you
-want to know the tensor key value, dtype and shape of the input tensors for
-executing the computation graph later. For example:
+要显示特定 `SignatureDef` 的所有输入和输出 `TensorInfo`，请将 `SignatureDef` 键传递给 `signature_def` 选项。当您想知道输入张量的键值、`dtype` 和形状以便后续执行计算图时，这会非常有用。例如：
 
 ```
 $ saved_model_cli show --dir \
@@ -747,8 +535,7 @@ The given SavedModel SignatureDef contains the following output(s):
 Method name is: tensorflow/serving/predict
 ```
 
-To show all available information in the SavedModel, use the `--all` option.
-For example:
+要显示 SavedModel 中的所有可用信息，请使用 `--all` 选项。例如：
 
 ```none
 $ saved_model_cli show --dir /tmp/saved_model_dir --all
@@ -784,11 +571,9 @@ signature_def['serving_default']:
 ```
 
 
-### `run` command
+### `run` 命令
 
-Invoke the `run` command to run a graph computation, passing
-inputs and then displaying (and optionally saving) the outputs.
-Here's the syntax:
+调用 `run` 命令以运行图计算、传递输入，然后显示（并可选地保存）输出。语法如下：
 
 ```
 usage: saved_model_cli run [-h] --dir DIR --tag_set TAG_SET --signature_def
@@ -798,118 +583,90 @@ usage: saved_model_cli run [-h] --dir DIR --tag_set TAG_SET --signature_def
                            [--overwrite] [--tf_debug]
 ```
 
-The `run` command provides the following three ways to pass inputs to the model:
+`run` 命令提供以下三种将输入传递给模型的方式：
 
-* `--inputs` option enables you to pass numpy ndarray in files.
-* `--input_exprs` option enables you to pass Python expressions.
-* `--input_examples` option enables you to pass `tf.train.Example`.
+- `--inputs` 选项可让您在文件中传递 NumPy ndarray。
+- `--input_exprs` 选项可让您传递 Python 表达式。
+- `--input_examples` 选项可让您传递 `tf.train.Example`。
+
 
 
 #### `--inputs`
 
-To pass input data in files, specify the `--inputs` option, which takes the
-following general format:
+要在文件中传递输入数据，请指定 `--inputs` 选项，该选项采用以下通用格式：
 
 ```bsh
 --inputs <INPUTS>
 ```
 
-where *INPUTS* is either of the following formats:
+INPUT 采用以下格式之一：
 
 *  `<input_key>=<filename>`
 *  `<input_key>=<filename>[<variable_name>]`
 
-You may pass multiple *INPUTS*. If you do pass multiple inputs, use a semicolon
-to separate each of the *INPUTS*.
+您可能会传递多个 INPUT。如果您确实要传递多个输入，请使用分号分隔每个 INPUT。
 
-`saved_model_cli` uses `numpy.load` to load the *filename*.
-The *filename* may be in any of the following formats:
+`saved_model_cli` 使用 `numpy.load` 加载 `filename`。文件名可以是以下任何一种格式：
 
 *  `.npy`
 *  `.npz`
-*  pickle format
+*  pickle 格式
 
-A `.npy` file always contains a numpy ndarray. Therefore, when loading from
-a `.npy` file, the content will be directly assigned to the specified input
-tensor. If you specify a *variable_name* with that `.npy` file, the
-*variable_name* will be ignored and a warning will be issued.
+`.npy` 文件总是包含多维数组 (numpy ndarray)。因此，当从 `.npy` 文件加载时，内容将直接分配给指定的输入张量。如果使用该 `.npy` 文件指定 `variable_name`，则 `variable_name` 将被忽略，并且系统会发出警告。
 
-When loading from a `.npz` (zip) file, you may optionally specify a
-*variable_name* to identify the variable within the zip file to load for
-the input tensor key.  If you don't specify a *variable_name*, the SavedModel
-CLI will check that only one file is included in the zip file and load it
-for the specified input tensor key.
+从 `.npz` (zip) 文件加载时，您可以选择指定一个 `variable_name` 来标识 `zip` 文件中针对输入张量键进行加载的变量。如果您未指定 `variable_name`，则 SavedModel CLI 将检查 `zip` 文件中是否只包含一个文件，并将为指定的输入张量键加载。
 
-When loading from a pickle file, if no `variable_name` is specified in the
-square brackets, whatever that is inside the pickle file will be passed to the
-specified input tensor key. Otherwise, the SavedModel CLI will assume a
-dictionary is stored in the pickle file and the value corresponding to
-the *variable_name* will be used.
+从 pickle 文件加载时，如果方括号中没有指定 `variable_name`，那么 `pickle` 文件中的任何内容都将传递到指定的输入张量键。否则，SavedModel CLI 会假设在 `pickle` 文件中存储了字典，并且与 `variable_name` 对应的值将被使用。
 
 
 #### `--input_exprs`
 
-To pass inputs through Python expressions, specify the `--input_exprs` option.
-This can be useful for when you don't have data
-files lying around, but still want to sanity check the model with some simple
-inputs that match the dtype and shape of the model's `SignatureDef`s.
-For example:
+要通过 Python 表达式传递输入，请指定 `--input_exprs` 选项。这对于您目前没有数据文件的情形而言非常有用，但最好还是用一些与模型的 `SignatureDef` 的 `dtype` 和形状匹配的简单输入来检查模型。例如：
 
 ```bsh
 `<input_key>=[[1],[2],[3]]`
 ```
 
-In addition to Python expressions, you may also pass numpy functions. For
-example:
+除了 Python 表达式之外，您还可以传递 numpy 函数。例如：
 
 ```bsh
 `<input_key>=np.ones((32,32,3))`
 ```
 
-(Note that the `numpy` module is already available to you as `np`.)
+（请注意，`numpy` 模块已可作为 `np` 提供。）
 
 
 #### `--input_examples`
 
-To pass `tf.train.Example` as inputs, specify the `--input_examples` option.
-For each input key, it takes a list of dictionary, where each dictionary is an
-instance of `tf.train.Example`. The dictionary keys are the features and the
-values are the value lists for each feature.
-For example:
+要将 `tf.train.Example` 作为输入进行传递，请指定 `--input_examples` 选项。对于每个输入键，它都接受一个字典列表，其中每个字典都是 `tf.train.Example` 的一个实例。不同的字典键代表不同的特征，而相应的值则是每个特征的值列表。例如：
 
 ```bsh
 `<input_key>=[{"age":[22,24],"education":["BS","MS"]}]`
 ```
 
-#### Save output
+#### 保存输出
 
-By default, the SavedModel CLI writes output to stdout. If a directory is
-passed to `--outdir` option, the outputs will be saved as npy files named after
-output tensor keys under the given directory.
+默认情况下，SavedModel CLI 将输出写入 `stdout`。如果目录传递给 `--outdir` 选项，则输出将被保存为在指定目录下以输出张量键命名的 `npy` 文件。
 
-Use `--overwrite` to overwrite existing output files.
+请使用 `--overwrite` 覆盖现有的输出文件。
 
 
-#### TensorFlow debugger (tfdbg) integration
+#### TensorFlow debugger (tfdbg) 集成
 
-If `--tf_debug` option is set, the SavedModel CLI will use the
-TensorFlow Debugger (tfdbg) to watch the intermediate Tensors and runtime
-graphs or subgraphs while running the SavedModel.
+如果设置了 `--tf_debug` 选项，则 SavedModel CLI 将使用 TensorFlow Debugger (tfdbg) 在运行 SavedModel 时观察中间张量和运行时图或子图。
 
 
-#### Full examples of `run`
+#### run 的完整示例
 
-Given:
+假设：
 
-*  Your model simply adds `x1` and `x2` to get output `y`.
-*  All tensors in the model have shape `(-1, 1)`.
-*  You have two `npy` files:
-   *  `/tmp/my_data1.npy`, which contains a numpy ndarray `[[1], [2], [3]]`.
-   *  `/tmp/my_data2.npy`, which contains another numpy
-      ndarray `[[0.5], [0.5], [0.5]]`.
+- 您的模型只需添加 `x1` 和 `x2` 即可获得输出 `y`。
+- 模型中的所有张量都具有形状 `(-1, 1)`。
+- 您有两个 `npy` 文件：
+    - `/tmp/my_data1.npy`，其中包含一个 NumPy ndarray `[[1], [2], [3]]`。
+    - `/tmp/my_data2.npy`，其中包含另一个 NumPy ndarray `[[0.5], [0.5], [0.5]]`。
 
-To run these two `npy` files through the model to get output `y`, issue
-the following command:
+要使用模型运行这两个 `npy` 文件以获得输出 `y`，请发出以下命令：
 
 ```
 $ saved_model_cli run --dir /tmp/saved_model_dir --tag_set serve \
@@ -921,9 +678,7 @@ Result for output key y:
  [ 3.5]]
 ```
 
-Let's change the preceding example slightly. This time, instead of two
-`.npy` files, you now have an `.npz` file and a pickle file. Furthermore,
-you want to overwrite any existing output file.  Here's the command:
+让我们稍微调整一下前面的例子。这一次，不是两个 `.npy` 文件，而是一个 `.npz` 文件和一个 pickle 文件。此外，您要覆盖任何现有的输出文件。命令如下：
 
 ```
 $ saved_model_cli run --dir /tmp/saved_model_dir --tag_set serve \
@@ -936,8 +691,7 @@ Result for output key y:
  [ 3.5]]
 ```
 
-You may specify python expression instead of an input file. For example,
-the following command replaces input `x2` with a Python expression:
+您可以指定 python 表达式，取代输入文件。例如，以下命令用 Python 表达式替换输入 `x2`：
 
 ```
 $ saved_model_cli run --dir /tmp/saved_model_dir --tag_set serve \
@@ -949,8 +703,7 @@ Result for output key y:
  [ 4]]
 ```
 
-To run the model with the TensorFlow Debugger on, issue the
-following command:
+要在开启 TensorFlow Debugger 的情况下运行模型，请发出以下命令：
 
 ```
 $ saved_model_cli run --dir /tmp/saved_model_dir --tag_set serve \
@@ -959,11 +712,9 @@ $ saved_model_cli run --dir /tmp/saved_model_dir --tag_set serve \
 
 
 <a name="structure"></a>
-## Structure of a SavedModel directory
+## SavedModel 目录的结构
 
-When you save a model in SavedModel format, TensorFlow creates
-a SavedModel directory consisting of the following subdirectories
-and files:
+当您以 SavedModel 格式保存模型时，TensorFlow 会创建一个由以下子目录和文件组成的 SavedModel 目录：
 
 ```bsh
 assets/
@@ -974,26 +725,15 @@ variables/
 saved_model.pb|saved_model.pbtxt
 ```
 
-where:
+其中：
 
-* `assets` is a subfolder containing auxiliary (external) files,
-  such as vocabularies.  Assets are copied to the SavedModel location
-  and can be read when loading a specific `MetaGraphDef`.
-* `assets.extra` is a subfolder where higher-level libraries and users can
-  add their own assets that co-exist with the model, but are not loaded by
-  the graph.  This subfolder is not managed by the SavedModel libraries.
-* `variables` is a subfolder that includes output from
-  `tf.train.Saver`.
-* `saved_model.pb` or `saved_model.pbtxt` is the SavedModel protocol buffer.
-  It includes the graph definitions as `MetaGraphDef` protocol buffers.
+- `assets` 是包含辅助（外部）文件（如词汇表）的子文件夹。资源被复制到 SavedModel 的位置，并且可以在加载特定的 `MetaGraphDef` 时被读取。
+- `assets.extra` 是一个子文件夹，其中较高级别的库和用户可以添加自己的资源，这些资源与模型共存，但不会被图加载。此子文件夹不由 SavedModel 库管理。
+- `variables` 是包含 `tf.train.Saver` 的输出的子文件夹。
+- `saved_model.pb` 或 `saved_model.pbtxt` 是 SavedModel 协议缓冲区。它包含作为 `MetaGraphDef` 协议缓冲区的图定义。
 
-A single SavedModel can represent multiple graphs.  In this case, all the
-graphs in the SavedModel share a *single* set of checkpoints (variables)
-and assets. For example, the following diagram shows one SavedModel
-containing three `MetaGraphDef`s, all three of which share the same set
-of checkpoints and assets:
+单个 SavedModel 可以表示多个图。在这种情况下，SavedModel 中所有图共享一组检查点（变量）和资源。例如，下图显示了一个包含三个 `MetaGraphDef` 的 SavedModel，它们三个都共享同一组检查点和资源：
 
-![SavedModel represents checkpoints, assets, and one or more MetaGraphDefs](../images/SavedModel.svg)
+![SavedModel represents checkpoints, assets, and one or more MetaGraphDefs](https://github.com/ziiai/tensorflow-docs/raw/master/images/SavedModel.svg)
 
-Each graph is associated with a specific set of tags, which enables
-identification during a load or restore operation.
+每个图都与一组特定的标记相关联，可在加载或恢复操作期间方便您识别。
