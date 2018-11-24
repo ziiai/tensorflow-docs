@@ -1,92 +1,63 @@
+# 创建自定义 Estimator
 
-# Creating Custom Estimators
+本文档介绍了自定义 Estimator。具体而言，本文档介绍了如何创建自定义 Estimator 来模拟预创建的 Estimator DNNClassifier 在解决鸢尾花问题时的行为。要详细了解鸢尾花问题，请参阅 [预创建的 Estimator](/docs/tensorflow/guide/premade_estimators)这一章。
 
-This document introduces custom Estimators. In particular, this document
-demonstrates how to create a custom `tf.estimator.Estimator` that
-mimics the behavior of the pre-made Estimator
-`tf.estimator.DNNClassifier` in solving the Iris problem. See
-the [Pre-Made Estimators chapter](../guide/premade_estimators.md) for details
-on the Iris problem.
-
-To download and access the example code invoke the following two commands:
+要下载和访问示例代码，请执行以下两个命令：
 
 ```shell
 git clone https://github.com/tensorflow/models/
 cd models/samples/core/get_started
 ```
-
-In this document we will be looking at
-[`custom_estimator.py`](https://github.com/tensorflow/models/blob/master/samples/core/get_started/custom_estimator.py).
-You can run it with the following command:
+在本文档中，我们将介绍 [`custom_estimator.py`](https://github.com/tensorflow/models/blob/master/samples/core/get_started/custom_estimator.py)。您可以使用以下命令运行它：
 
 ```bsh
 python custom_estimator.py
 ```
 
-If you are feeling impatient, feel free to compare and contrast
+如果您时间并不充足，欢迎对比
 [`custom_estimator.py`](https://github.com/tensorflow/models/blob/master/samples/core/get_started/custom_estimator.py)
-with
+与
 [`premade_estimator.py`](https://github.com/tensorflow/models/blob/master/samples/core/get_started/premade_estimator.py).
-(which is in the same directory).
+（位于同一个目录中）。
 
 
 
-## Pre-made vs. custom
+## 预创建的 Estimator 与自定义 Estimator
 
-As the following figure shows, pre-made Estimators are subclasses of the
-`tf.estimator.Estimator` base class, while custom Estimators are an instance
-of tf.estimator.Estimator:
+如下图所示，预创建的 Estimator 是 `tf.estimator.Estimator` 基类的子类，而自定义 Estimator 是 `tf.estimator.Estimator` 的实例：
 
 <div style="width:100%; margin:auto; margin-bottom:10px; margin-top:20px;">
 <img style="display:block; margin: 0 auto"
   alt="Premade estimators are sub-classes of `Estimator`. Custom Estimators are usually (direct) instances of `Estimator`"
-  src="../images/custom_estimators/estimator_types.png">
+  src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/custom_estimators/estimator_types.png">
 </div>
 <div style="text-align: center">
-Pre-made and custom Estimators are all Estimators.
+ 预创建的 Estimator 和自定义 Estimator 都是 Estimator。 
 </div>
 
-Pre-made Estimators are fully baked. Sometimes though, you need more control
-over an Estimator's behavior.  That's where custom Estimators come in. You can
-create a custom Estimator to do just about anything. If you want hidden layers
-connected in some unusual fashion, write a custom Estimator. If you want to
-calculate a unique
-[metric](https://developers.google.com/machine-learning/glossary/#metric)
-for your model, write a custom Estimator.  Basically, if you want an Estimator
-optimized for your specific problem, write a custom Estimator.
+预创建的 Estimator 已完全成形。不过有时，您需要更好地控制 Estimator 的行为。这时，自定义 Estimator 就派上用场了。您可以创建自定义 Estimator 来完成几乎任何操作。如果您需要以某种不寻常的方式连接隐藏层，则可以编写自定义 Estimator。如果您需要为模型计算独特的指标，也可以编写自定义 Estimator。基本而言，如果您需要一个针对具体问题进行了优化的 Estimator，就可以编写自定义 Estimator。
 
-A model function (or `model_fn`) implements the ML algorithm. The
-only difference between working with pre-made Estimators and custom Estimators
-is:
+模型函数（即 `model_fn`）会实现机器学习算法。采用预创建的 Estimator 和自定义 Estimator 的唯一区别是：
 
-* With pre-made Estimators, someone already wrote the model function for you.
-* With custom Estimators, you must write the model function.
+- 如果采用预创建的 Estimator，则有人已为您编写了模型函数。
+- 如果采用自定义 Estimator，则您必须自行编写模型函数。
 
-Your model function could implement a wide range of algorithms, defining all
-sorts of hidden layers and metrics.  Like input functions, all model functions
-must accept a standard group of input parameters and return a standard group of
-output values. Just as input functions can leverage the Dataset API, model
-functions can leverage the Layers API and the Metrics API.
+您的模型函数可以实现各种算法，定义各种各样的隐藏层和指标。与输入函数一样，所有模型函数都必须接受一组标准输入参数并返回一组标准输出值。正如输入函数可以利用 Dataset API 一样，模型函数可以利用 Layers API 和 Metrics API。
 
-Let's see how to solve the Iris problem with a custom Estimator. A quick
-reminder--here's the organization of the Iris model that we're trying to mimic:
+我们来看看如何使用自定义 Estimator 解决鸢尾花问题。快速提醒：以下是我们尝试模拟的鸢尾花模型的结构：
 
 <div style="width:100%; margin:auto; margin-bottom:10px; margin-top:20px;">
 <img style="display:block; margin: 0 auto"
   alt="A diagram of the network architecture: Inputs, 2 hidden layers, and outputs"
-  src="../images/custom_estimators/full_network.png">
+  src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/custom_estimators/full_network.png">
 </div>
 <div style="text-align: center">
-Our implementation of Iris contains four features, two hidden layers,
-and a logits output layer.
+ 我们的鸢尾花实现包含四个特征、两个隐藏层和一个对数输出层。 
 </div>
 
-## Write an Input function
+## 编写输入函数
 
-Our custom Estimator implementation uses the same input function as our
-[pre-made Estimator implementation](../guide/premade_estimators.md), from
-[`iris_data.py`](https://github.com/tensorflow/models/blob/master/samples/core/get_started/iris_data.py).
-Namely:
+我们的自定义 Estimator 实现与我们的[预创建的 Estimator 实现](/docs/tensorflow/guide/premade_estimators)使用的是同一输入函数（来自 [`iris_data.py`](https://github.com/tensorflow/models/blob/master/samples/core/get_started/iris_data.py)）。即：
 
 ```python
 def train_input_fn(features, labels, batch_size):
@@ -101,20 +72,13 @@ def train_input_fn(features, labels, batch_size):
     return dataset.make_one_shot_iterator().get_next()
 ```
 
-This input function builds an input pipeline that yields batches of
-`(features, labels)` pairs, where `features` is a dictionary features.
+此输入函数会构建可以生成批次 `(features, labels)` 对的输入管道，其中 `features` 是字典特征。
 
-## Create feature columns
+## 创建特征列
 
-As detailed in the [Premade Estimators](../guide/premade_estimators.md) and
-[Feature Columns](../guide/feature_columns.md) chapters, you must define
-your model's feature columns to specify how the model should use each feature.
-Whether working with pre-made Estimators or custom Estimators, you define
-feature columns in the same fashion.
+按照 [Premade Estimators预创建的 Estimator](/docs/tensorflow/guide/premade_estimators) 和[特征列](/docs/tensorflow/guide/feature_columns)章节中详细介绍的内容，您必须定义模型的特征列来指定模型应该如何使用每个特征。无论是使用预创建的 Estimator 还是自定义 Estimator，您都要使用相同的方式定义特征列。
 
-The following code creates a simple `numeric_column` for each input feature,
-indicating that the value of the input feature should be used directly as an
-input to the model:
+以下代码为每个输入特征创建一个简单的 `numeric_column`，表示应该将输入特征的值直接用作模型的输入：
 
 ```python
 # Feature columns describe how to use the input.
@@ -123,9 +87,9 @@ for key in train_x.keys():
     my_feature_columns.append(tf.feature_column.numeric_column(key=key))
 ```
 
-## Write a model function
+## 编写模型函数
 
-The model function we'll use has the following call signature:
+我们要使用的模型函数具有以下调用签名：
 
 ```python
 def my_model_fn(
@@ -135,17 +99,12 @@ def my_model_fn(
    params):  # Additional configuration
 ```
 
-The first two arguments are the batches of features and labels returned from
-the input function; that is, `features` and `labels` are the handles to the
-data your model will use. The `mode` argument indicates whether the caller is
-requesting training, predicting, or evaluation.
+前两个参数是从输入函数中返回的特征和标签批次；也就是说，`features` 和 `labels` 是模型将使用的数据的句柄。`mode` 参数表示调用程序是请求训练、预测还是评估。
 
-The caller may pass `params` to an Estimator's constructor. Any `params` passed
-to the constructor are in turn passed on to the `model_fn`. In
+调用程序可以将 params 传递给 Estimator 的构造函数。传递给构造函数的所有 params 转而又传递给 model_fn。在
 [`custom_estimator.py`](https://github.com/tensorflow/models/blob/master/samples/core/get_started/custom_estimator.py)
-the following lines create the estimator and set the params to configure the
-model. This configuration step is similar to how we configured the `tf.estimator.DNNClassifier` in
-[Premade Estimators](../guide/premade_estimators.md).
+以下行将创建 Estimator 并设置参数来配置模型。此配置步骤与我们配置 `tf.estimator.DNNClassifier`（在
+[预创建的 Estimator](/docs/tensorflow/guide/premade_estimators)中）的方式相似。
 
 ```python
 classifier = tf.estimator.Estimator(
@@ -159,52 +118,43 @@ classifier = tf.estimator.Estimator(
     })
 ```
 
-To implement a typical model function, you must do the following:
+要实现一般的模型函数，您必须执行下列操作：
 
-* [Define the model](#define_the_model).
-* Specify additional calculations for each of
-  the [three different modes](#modes):
-    * [Predict](#predict)
-    * [Evaluate](#evaluate)
-    * [Train](#train)
+* [定义模型](#define_the_model).
+* 分别为 [three different modes](#modes)指定其他计算：
+    * [预测](#predict)
+    * [评估](#evaluate)
+    * [训练](#train)
 
-## Define the model
+## 定义模型
 
-The basic deep neural network model must define the following three sections:
+基本的深度神经网络模型必须定义下列三个部分：
 
-* An [input layer](https://developers.google.com/machine-learning/glossary/#input_layer)
-* One or more [hidden layers](https://developers.google.com/machine-learning/glossary/#hidden_layer)
-* An [output layer](https://developers.google.com/machine-learning/glossary/#output_layer)
+* 一个 [输入层](https://developers.google.com/machine-learning/glossary/#input_layer)
+* 一个或多个[隐藏层](https://developers.google.com/machine-learning/glossary/#hidden_layer)
+* 一个 [输出层](https://developers.google.com/machine-learning/glossary/#output_layer)
 
-### Define the input layer
+### 定义输入层
 
-The first line of the `model_fn` calls `tf.feature_column.input_layer` to
-convert the feature dictionary and `feature_columns` into input for your model,
-as follows:
+在 `model_fn` 的第一行调用 `tf.feature_column.input_layer`，以将特征字典和 `feature_columns` 转换为模型的输入，如下所示：
 
 ```python
     # Use `input_layer` to apply the feature columns.
     net = tf.feature_column.input_layer(features, params['feature_columns'])
 ```
 
-The preceding line applies the transformations defined by your feature columns,
-creating the model's input layer.
+上面的行会应用特征列定义的转换，从而创建模型的输入层。
 
 <div style="width:100%; margin:auto; margin-bottom:10px; margin-top:20px;">
 <img style="display:block; margin: 0 auto"
   alt="A diagram of the input layer, in this case a 1:1 mapping from raw-inputs to features."
-  src="../images/custom_estimators/input_layer.png">
+  src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/custom_estimators/input_layer.png">
 </div>
 
 
-### Hidden Layers
+### 隐藏层
 
-If you are creating a deep neural network, you must define one or more hidden
-layers. The Layers API provides a rich set of functions to define all types of
-hidden layers, including convolutional, pooling, and dropout layers. For Iris,
-we're simply going to call `tf.layers.dense` to create hidden layers, with
-dimensions defined by `params['hidden_layers']`. In a `dense` layer each node
-is connected to every node in the preceding layer.  Here's the relevant code:
+如果您要创建深度神经网络，则必须定义一个或多个隐藏层。Layers API 提供一组丰富的函数来定义所有类型的隐藏层，包括卷积层、池化层和丢弃层。对于鸢尾花，我们只需调用 `tf.layers.dense` 来创建隐藏层，并使用 `params['hidden_layers']` 定义维度。在 `dense` 层中，每个节点都连接到前一层中的各个节点。下面是相关代码：
 
 ``` python
     # Build the hidden layers, sized according to the 'hidden_units' param.
@@ -212,69 +162,51 @@ is connected to every node in the preceding layer.  Here's the relevant code:
         net = tf.layers.dense(net, units=units, activation=tf.nn.relu)
 ```
 
-* The `units` parameter defines the number of output neurons in a given layer.
-* The `activation` parameter defines the [activation function](https://developers.google.com/machine-learning/glossary/#activation_function) —
-  [Relu](https://developers.google.com/machine-learning/glossary/#ReLU) in this
-  case.
+* `units` 参数会定义指定层中输出神经元的数量。
+* `activation` 参数会定义[激活函数](https://developers.google.com/machine-learning/glossary/#activation_function)
+- 在这种情况下为 [Relu](https://developers.google.com/machine-learning/glossary/#ReLU)。
 
-The variable `net` here signifies the current top layer of the network. During
-the first iteration, `net` signifies the input layer. On each loop iteration
-`tf.layers.dense` creates a new layer, which takes the previous layer's output
-as its input, using the variable `net`.
+这里的变量 `net` 表示网络的当前顶层。在第一次迭代中，`net` 表示输入层。在每次循环迭代时，`tf.layers.dense` 都使用变量 `net` 创建一个新层，该层将前一层的输出作为其输入。
 
-After creating two hidden layers, our network looks as follows. For
-simplicity, the figure does not show all the units in each layer.
+创建两个隐藏层后，我们的网络如下所示。为了简单起见，下图并未显示各个层中的所有单元。
 
 <div style="width:100%; margin:auto; margin-bottom:10px; margin-top:20px;">
 <img style="display:block; margin: 0 auto"
   alt="The input layer with two hidden layers added."
-  src="../images/custom_estimators/add_hidden_layer.png">
+  src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/custom_estimators/add_hidden_layer.png">
 </div>
 
-Note that `tf.layers.dense` provides many additional capabilities, including
-the ability to set a multitude of regularization parameters. For the sake of
-simplicity, though, we're going to simply accept the default values of the
-other parameters.
+请注意，`tf.layers.dense` 提供很多其他功能，包括设置多种正则化参数的功能。不过，为了简单起见，我们只接受其他参数的默认值。
 
-### Output Layer
+### 输出层
 
-We'll define the output layer by calling `tf.layers.dense` yet again, this
-time without an activation function:
+我们再次调用 `tf.layers.dense` 定义输出层，这次不使用激活函数：
 
 ```python
     # Compute logits (1 per class).
     logits = tf.layers.dense(net, params['n_classes'], activation=None)
 ```
 
-Here, `net` signifies the final hidden layer. Therefore, the full set of layers
-is now connected as follows:
+在这里，`net` 表示最后的隐藏层。因此，所有的层如下所示连接在一起：
 
 <div style="width:100%; margin:auto; margin-bottom:10px; margin-top:20px;">
 <img style="display:block; margin: 0 auto"
   alt="A logit output layer connected to the top hidden layer"
-  src="../images/custom_estimators/add_logits.png">
+  src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/custom_estimators/add_logits.png">
 </div>
 <div style="text-align: center">
-The final hidden layer feeds into the output layer.
+ 最后的隐藏层馈送到输出层。 
 </div>
 
-When defining an output layer, the `units` parameter specifies the number of
-outputs. So, by setting `units` to `params['n_classes']`, the model produces
-one output value per class. Each element of the output vector will contain the
-score, or "logit", calculated for the associated class of Iris: Setosa,
-Versicolor, or Virginica, respectively.
+定义输出层时，`units` 参数会指定输出的数量。因此，通过将 `units` 设置为 `params['n_classes']`，模型会为每个类别生成一个输出值。输出向量的每个元素都将包含针对相关鸢尾花类别（山鸢尾、变色鸢尾或维吉尼亚鸢尾）分别计算的分数或“对数”。
 
-Later on, these logits will be transformed into probabilities by the
-`tf.nn.softmax` function.
+之后，`tf.nn.softmax` 函数会将这些对数转换为概率。
 
-## Implement training, evaluation, and prediction {#modes}
+## 实现训练、评估和预测
 
-The final step in creating a model function is to write branching code that
-implements prediction, evaluation, and training.
+创建模型函数的最后一步是编写实现预测、评估和训练的分支代码。
 
-The model function gets invoked whenever someone calls the Estimator's `train`,
-`evaluate`, or `predict` methods. Recall that the signature for the model
-function looks like this:
+每当有人调用 Estimator 的 `train`、`evaluate` 或 `predict` 方法时，就会调用模型函数。您应该记得，模型函数的签名如下所示：
 
 ``` python
 def my_model_fn(
@@ -284,42 +216,31 @@ def my_model_fn(
    params):  # Additional configuration
 ```
 
-Focus on that third argument, mode. As the following table shows, when someone
-calls `train`, `evaluate`, or `predict`, the Estimator framework invokes your model
-function with the mode parameter set as follows:
+重点关注第三个参数 `mode`。如下表所示，当有人调用 `train`、`evaluate` 或 `predict` 时，Estimator 框架会调用模型函数并将 `mode` 参数设置为如下所示的值：
 
-| Estimator method                 |    Estimator Mode |
+| Estimator 方法                 |    Estimator 模式 |
 |:---------------------------------|:------------------|
 |`tf.estimator.Estimator.train` |`tf.estimator.ModeKeys.TRAIN` |
 |`tf.estimator.Estimator.evaluate`  |`tf.estimator.ModeKeys.EVAL`      |
 |`tf.estimator.Estimator.predict`|`tf.estimator.ModeKeys.PREDICT` |
 
-For example, suppose you instantiate a custom Estimator to generate an object
-named `classifier`. Then, you make the following call:
+例如，假设您实例化自定义 Estimator 来生成名为 `classifier` 的对象。然后，您做出以下调用：
 
 ``` python
 classifier = tf.estimator.Estimator(...)
 classifier.train(input_fn=lambda: my_input_fn(FILE_TRAIN, True, 500))
 ```
-The Estimator framework then calls your model function with mode set to
-`ModeKeys.TRAIN`.
+然后，Estimator 框架会调用模型函数并将 `mode` 设为 `ModeKeys.TRAIN`。
 
-Your model function must provide code to handle all three of the mode values.
-For each mode value, your code must return an instance of
-`tf.estimator.EstimatorSpec`, which contains the information the caller
-requires. Let's examine each mode.
+模型函数必须提供代码来处理全部三个 `mode` 值。对于每个 `mode` 值，您的代码都必须返回 `tf.estimator.EstimatorSpec` 的一个实例，其中包含调用程序所需的信息。我们来详细了解各个 `mode`。
 
-### Predict
+### 预测
 
-When the Estimator's `predict` method is called, the `model_fn` receives
-`mode = ModeKeys.PREDICT`. In this case, the model function must return a
-`tf.estimator.EstimatorSpec` containing the prediction.
+如果调用 Estimator 的 `predict` 方法，则 `model_fn` 会收到 `mode = ModeKeys.PREDICT`。在这种情况下，模型函数必须返回一个包含预测的 `tf.estimator.EstimatorSpec`。
 
-The model must have been trained prior to making a prediction. The trained model
-is stored on disk in the `model_dir` directory established when you
-instantiated the Estimator.
+该模型必须经过训练才能进行预测。经过训练的模型存储在磁盘上，位于您实例化 Estimator 时建立的 `model_dir` 目录中。
 
-The code to generate the prediction for this model looks as follows:
+此模型用于生成预测的代码如下所示：
 
 ```python
 # Compute predictions.
@@ -332,62 +253,40 @@ if mode == tf.estimator.ModeKeys.PREDICT:
     }
     return tf.estimator.EstimatorSpec(mode, predictions=predictions)
 ```
-The prediction dictionary contains everything that your model returns when run
-in prediction mode.
+预测字典中包含模型在预测模式下运行时返回的所有内容。
 
 <div style="width:100%; margin:auto; margin-bottom:10px; margin-top:20px;">
 <img style="display:block; margin: 0 auto"
   alt="Additional outputs added to the output layer."
-  src="../images/custom_estimators/add_predictions.png">
+  src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/custom_estimators/add_predictions.png">
 </div>
 
-The `predictions` holds the following three key/value pairs:
+`predictions` 存储的是下列三个键值对：
 
-*   `class_ids` holds the class id (0, 1, or 2) representing the model's
-    prediction of the most likely species for this example.
-*   `probabilities` holds the three probabilities (in this example, 0.02, 0.95,
-    and 0.03)
-*   `logit` holds the raw logit values (in this example, -1.3, 2.6, and -0.9)
+*   `class_ids` 存储的是类别 ID（0、1 或 2），表示模型对此样本最有可能归属的品种做出的预测
+*   `probabilities` 存储的是三个概率（在本例中，分别是 0.02、0.95 和 0.03）
+*   `logit` 存储的是原始对数值（在本例中，分别是 -1.3、2.6 和 -0.9）
 
-We return that dictionary to the caller via the `predictions` parameter of the
-`tf.estimator.EstimatorSpec`. The Estimator's
-`tf.estimator.Estimator.predict` method will yield these
-dictionaries.
+我们通过 `predictions` 参数（属于 `tf.estimator.EstimatorSpec`）将该字典返回到调用程序。Estimator 的 `predict` 方法会生成这些字典。
 
-### Calculate the loss
+### 计算损失
 
-For both [training](#train) and [evaluation](#evaluate) we need to calculate the
-model's loss. This is the
-[objective](https://developers.google.com/machine-learning/glossary/#objective)
-that will be optimized.
+对于 [训练](#train)和[评估](#evaluate)，我们都需要计算模型的损失。这是要进行优化的[目标](https://developers.google.com/machine-learning/glossary/#objective)。
 
-We can calculate the loss by calling `tf.losses.sparse_softmax_cross_entropy`.
-The value returned by this function will be approximately 0 at lowest,
-when the probability of the correct class (at index `label`) is near 1.0.
-The loss value returned is progressively larger as the probability of the
-correct class decreases.
+我们可以通过调用 `tf.losses.sparse_softmax_cross_entropy` 计算损失。当正确类别的概率（索引为 `label`）接近 1.0 时，此函数返回的值将最低，接近 0。随着正确类别的概率不断降低，返回的损失值越来越大。
 
-This function returns the average over the whole batch.
+此函数会针对整个批次返回平均值。
 
 ```python
 # Compute loss.
 loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
 ```
 
-### Evaluate
+### 评估
 
-When the Estimator's `evaluate` method is called, the `model_fn` receives
-`mode = ModeKeys.EVAL`. In this case, the model function must return a
-`tf.estimator.EstimatorSpec` containing the model's loss and optionally one
-or more metrics.
+如果调用 Estimator 的 `evaluate` 方法，则 `model_fn` 会收到 `mode = ModeKeys.EVAL`。在这种情况下，模型函数必须返回一个包含模型损失和一个或多个指标（可选）的 `tf.estimator.EstimatorSpec`。
 
-Although returning metrics is optional, most custom Estimators do return at
-least one metric. TensorFlow provides a Metrics module `tf.metrics` to
-calculate common metrics.  For brevity's sake, we'll only return accuracy. The
-`tf.metrics.accuracy` function compares our predictions against the
-true values, that is, against the labels provided by the input function. The
-`tf.metrics.accuracy` function requires the labels and predictions to have the
-same shape. Here's the call to `tf.metrics.accuracy`:
+虽然返回指标是可选的，但大多数自定义 Estimator 至少会返回一个指标。TensorFlow 提供一个指标模块 `tf.metrics` 来计算常用指标。为简单起见，我们将只返回准确率。`tf.metrics.accuracy` 函数会将我们的预测值与真实值进行比较，即与输入函数提供的标签进行比较。`tf.metrics.accuracy` 函数要求标签和预测具有相同的形状。下面是对 `tf.metrics.accuracy` 的调用：
 
 ``` python
 # Compute evaluation metrics.
@@ -396,16 +295,12 @@ accuracy = tf.metrics.accuracy(labels=labels,
                                name='acc_op')
 ```
 
-The `tf.estimator.EstimatorSpec` returned for evaluation
-typically contains the following information:
+针对评估返回的 `EstimatorSpec` 通常包含以下信息：
 
-* `loss`, which is the model's loss
-* `eval_metric_ops`, which is an optional dictionary of metrics.
+* `loss`：这是模型的损失
+* `eval_metric_ops`：这是可选的指标字典。
 
-So, we'll create a dictionary containing our sole metric. If we had calculated
-other metrics, we would have added them as additional key/value pairs to that
-same dictionary.  Then, we'll pass that dictionary in the `eval_metric_ops`
-argument of `tf.estimator.EstimatorSpec`. Here's the code:
+我们将创建一个包含我们的唯一指标的字典。如果我们计算了其他指标，则将这些指标作为附加键值对添加到同一字典中。然后，我们将在 `eval_metric_ops` 参数（属于 `tf.estimator.EstimatorSpec`）中传递该字典。具体代码如下：
 
 ```python
 metrics = {'accuracy': accuracy}
@@ -416,60 +311,46 @@ if mode == tf.estimator.ModeKeys.EVAL:
         mode, loss=loss, eval_metric_ops=metrics)
 ```
 
-The `tf.summary.scalar` will make accuracy available to TensorBoard
-in both `TRAIN` and `EVAL` modes. (More on this later).
+`tf.summary.scalar` 会在 `TRAIN` 和 `EVAL` 模式下向 TensorBoard 提供准确率（后文将对此进行详细的介绍）。
 
-### Train
+### 训练
 
-When the Estimator's `train` method is called, the `model_fn` is called
-with `mode = ModeKeys.TRAIN`. In this case, the model function must return an
-`EstimatorSpec` that contains the loss and a training operation.
+如果调用 Estimator 的 `train` 方法，则会调用 `model_fn` 并收到 `mode = ModeKeys.TRAIN`。在这种情况下，模型函数必须返回一个包含损失和训练操作的 `EstimatorSpec`。
 
-Building the training operation will require an optimizer. We will use
-`tf.train.AdagradOptimizer` because we're mimicking the `DNNClassifier`, which
-also uses `Adagrad` by default. The `tf.train` package provides many other
-optimizers—feel free to experiment with them.
+构建训练操作需要优化器。我们将使用 `tf.train.AdagradOptimizer`，因为我们模仿的是 `DNNClassifier`，它也默认使用 `Adagrad`。`tf.train` 文件包提供很多其他优化器，您可以随意尝试它们。
 
-Here is the code that builds the optimizer:
+下面是构建优化器的代码：
 
 ``` python
 optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
 ```
 
-Next, we build the training operation using the optimizer's
-`tf.train.Optimizer.minimize` method on the loss we calculated
-earlier.
+接下来，我们使用优化器的 `minimize` 方法根据我们之前计算的损失构建训练操作。
 
-The `minimize` method also takes a `global_step` parameter. TensorFlow uses this
-parameter to count the number of training steps that have been processed
-(to know when to end a training run). Furthermore, the `global_step` is
-essential for TensorBoard graphs to work correctly. Simply call
-`tf.train.get_global_step` and pass the result to the `global_step`
-argument of `minimize`.
+`minimize` 方法还具有 `global_step` 参数。TensorFlow 使用此参数来计算已经处理过的训练步数（以了解何时结束训练）。此外，`global_step` 对于 TensorBoard 图能否正常运行至关重要。只需调用 `tf.train.get_global_step` 并将结果传递给 `minimize` 的 `global_step` 参数即可。
 
-Here's the code to train the model:
+下面是训练模型的代码：
 
 ``` python
 train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
 ```
 
-The `tf.estimator.EstimatorSpec` returned for training
-must have the following fields set:
+针对训练返回的 `EstimatorSpec` 必须设置了下列字段：
 
-* `loss`, which contains the value of the loss function.
-* `train_op`, which executes a training step.
+* `loss`：包含损失函数的值。
+* `train_op`：执行训练步。
 
-Here's our code to call `EstimatorSpec`:
+下面是用于调用 `EstimatorSpec` 的代码：
 
 ```python
 return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 ```
 
-The model function is now complete.
+模型函数现已完成。
 
-## The custom Estimator
+## 自定义 Estimator
 
-Instantiate the custom Estimator through the Estimator base class as follows:
+通过 Estimator 基类实例化自定义 Estimator，如下所示：
 
 ```python
     # Build 2 hidden layer DNN with 10, 10 units respectively.
@@ -483,14 +364,9 @@ Instantiate the custom Estimator through the Estimator base class as follows:
             'n_classes': 3,
         })
 ```
-Here the `params` dictionary serves the same purpose as the key-word
-arguments of `DNNClassifier`; that is, the `params` dictionary lets you
-configure your Estimator without modifying the code in the `model_fn`.
+在这里，`params` 字典与 `DNNClassifier` 的关键字参数用途相同；即借助 `params` 字典，您无需修改 `model_fn` 中的代码即可配置 Estimator。
 
-The rest of the code to train, evaluate, and generate predictions using our
-Estimator is the same as in the
-[Premade Estimators](../guide/premade_estimators.md) chapter. For
-example, the following line will train the model:
+使用 Estimator 训练、评估和生成预测要用的其余代码与预创建的 Estimator 一章中的相同。例如，以下行将训练模型：
 
 ```python
 # Train the Model.
@@ -501,102 +377,78 @@ classifier.train(
 
 ## TensorBoard
 
-You can view training results for your custom Estimator in TensorBoard. To see
-this reporting, start TensorBoard from your command line as follows:
+您可以在 TensorBoard 中查看自定义 Estimator 的训练结果。要查看相应报告，请从命令行启动 TensorBoard，如下所示：
 
 ```bsh
 # Replace PATH with the actual path passed as model_dir
 tensorboard --logdir=PATH
 ```
 
-Then, open TensorBoard by browsing to: [http://localhost:6006](http://localhost:6006)
+然后，通过以下网址打开 TensorBoard： [http://localhost:6006](http://localhost:6006)
 
-All the pre-made Estimators automatically log a lot of information to
-TensorBoard. With custom Estimators, however, TensorBoard only provides one
-default log (a graph of the loss) plus the information you explicitly tell
-TensorBoard to log. For the custom Estimator you just created, TensorBoard
-generates the following:
+所有预创建的 Estimator 都会自动将大量信息记录到 TensorBoard 上。不过，对于自定义 Estimator，TensorBoard 只提供一个默认日志（损失图）以及您明确告知 TensorBoard 要记录的信息。对于您刚刚创建的自定义 Estimator，TensorBoard 会生成以下内容：
 
 <div style="width:100%; margin:auto; margin-bottom:10px; margin-top:20px;">
 
 <img style="display:block; margin: 0 auto"
   alt="Accuracy, 'scalar' graph from tensorboard"
-  src="../images/custom_estimators/accuracy.png">
+  src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/custom_estimators/accuracy.png">
 
 <img style="display:block; margin: 0 auto"
   alt="loss 'scalar' graph from tensorboard"
-  src="../images/custom_estimators/loss.png">
+  src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/custom_estimators/loss.png">
 
 <img style="display:block; margin: 0 auto"
   alt="steps/second 'scalar' graph from tensorboard"
-  src="../images/custom_estimators/steps_per_second.png">
+  src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/custom_estimators/steps_per_second.png">
 </div>
 
 <div style="text-align: center">
-TensorBoard displays three graphs.
+ TensorBoard 显示了三张图。 
 </div>
 
 
-In brief, here's what the three graphs tell you:
+简而言之，下面是三张图显示的内容：
 
-* global_step/sec: A performance indicator showing how many batches (gradient
-  updates) we processed per second as the model trains.
+* global_step/sec：这是一个性能指标，显示我们在进行模型训练时每秒处理的批次数（梯度更新）。
 
-* loss: The loss reported.
+* loss：所报告的损失。
 
-* accuracy: The accuracy is recorded by the following two lines:
+* accuracy：准确率由下列两行记录：
 
-    * `eval_metric_ops={'my_accuracy': accuracy}`, during evaluation.
-    * `tf.summary.scalar('accuracy', accuracy[1])`, during training.
+    * `eval_metric_ops={'my_accuracy': accuracy}`（评估期间）。
+    * `tf.summary.scalar('accuracy', accuracy[1])`（训练期间）。
 
-These tensorboard graphs are one of the main reasons it's important to pass a
-`global_step` to your optimizer's `minimize` method. The model can't record
-the x-coordinate for these graphs without it.
+这些 Tensorboard 图是务必要将 `global_step` 传递给优化器的 `minimize` 方法的主要原因之一。如果没有它，模型就无法记录这些图的 `x` 坐标。
 
-Note the following in the `my_accuracy` and `loss` graphs:
+注意 `my_accuracy` 和 `loss` 图中的以下内容：
 
-* The orange line represents training.
-* The blue dot represents evaluation.
+* 橙线表示训练。
+* 蓝点表示评估。
 
-During training, summaries (the orange line) are recorded periodically as
-batches are processed, which is why it becomes a graph spanning x-axis range.
+在训练期间，系统会随着批次的处理定期记录摘要信息（橙线），因此它会变成一个跨越 x 轴范围的图形。
 
-By contrast, evaluation produces only a single point on the graph for each call
-to `evaluate`. This point contains the average over the entire evaluation call.
-This has no width on the graph as it is evaluated entirely from the model state
-at a particular training step (from a single checkpoint).
+相比之下，评估在每次调用 `evaluate` 时仅在图上生成一个点。此点包含整个评估调用的平均值。它在图上没有宽度，因为它完全根据特定训练步（一个检查点）的模型状态进行评估。
 
-As suggested in the following figure, you may see and also selectively
-disable/enable the reporting using the controls on the left side.
+如下图所示，您可以使用左侧的控件查看并选择性地停用/启用报告。
 
 <div style="width:100%; margin:auto; margin-bottom:10px; margin-top:20px;">
 <img style="display:block; margin: 0 auto"
   alt="Check-boxes allowing the user to select which runs are shown."
-  src="../images/custom_estimators/select_run.jpg">
+  src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/custom_estimators/select_run.jpg">
 </div>
 <div style="text-align: center">
-Enable or disable reporting.
+ 启用或停用报告。 
 </div>
 
 
-## Summary
+## 总结
 
-Although pre-made Estimators can be an effective way to quickly create new
-models, you will often need the additional flexibility that custom Estimators
-provide. Fortunately, pre-made and custom Estimators follow the same
-programming model. The only practical difference is that you must write a model
-function for custom Estimators; everything else is the same.
+虽然使用预创建的 Estimator 可以快速高效地创建新模型，但您通常需要使用自定义 Estimator 才能实现所需的灵活性。幸运的是，预创建的 Estimator 和自定义 Estimator 采用相同的编程模型。唯一的实际区别是您必须为自定义 Estimator 编写模型函数；除此之外，其他都是相同的。
 
-For more details, be sure to check out:
+要了解详情，请务必查看：
 
-* The
-  [official TensorFlow implementation of MNIST](https://github.com/tensorflow/models/tree/master/official/mnist),
-  which uses a custom estimator.
-* The TensorFlow
-  [official models repository](https://github.com/tensorflow/models/tree/master/official),
-  which contains more curated examples using custom estimators.
-* This [TensorBoard video](https://youtu.be/eBbEDRsCmv4), which introduces
-  TensorBoard.
-* The [Low Level Introduction](../guide/low_level_intro.md), which demonstrates
-  how to experiment directly with TensorFlow's low level APIs, making debugging
-  easier.
+* [官方 TensorFlow MNIST 实现](https://github.com/tensorflow/models/tree/master/official/mnist)：使用了自定义 Estimator。
+* [TensorFlow 官方模型代码库](https://github.com/tensorflow/models/tree/master/official)：其中包含更多使用自定义 Estimator 的精选示例。
+* [TensorBoard 视频](https://youtu.be/eBbEDRsCmv4)：介绍了 TensorBoard。
+* [低阶 API 简介](/docs/tensorflow/guide/low_level_intro)：展示了如何直接使用 TensorFlow 的低阶 API 更轻松地进行调试。
