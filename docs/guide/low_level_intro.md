@@ -1,36 +1,29 @@
-# Introduction
+#  低阶 API 简介
 
-This guide gets you started programming in the low-level TensorFlow APIs
-(TensorFlow Core), showing you how to:
+本指南旨在指导您使用低阶 TensorFlow API (TensorFlow Core) 开始编程。您可以学习执行以下操作：
 
-  * Manage your own TensorFlow program (a `tf.Graph`) and TensorFlow
-    runtime (a `tf.Session`), instead of relying on Estimators to manage them.
-  * Run TensorFlow operations, using a `tf.Session`.
-  * Use high level components ([datasets](#datasets), [layers](#layers), and
-    [feature_columns](#feature_columns)) in this low level environment.
-  * Build your own training loop, instead of using the one
-    [provided by Estimators](../guide/premade_estimators.md).
+  * 管理您自己的 TensorFlow 程序 (`tf.Graph`) 和 TensorFlow 运行时 (`tf.Session`)，而不是依靠 Estimator 来管理它们。
+  * 使用 `tf.Session` 运行 TensorFlow 操作。
+  * 在此低级别环境中使用高级别组件（[数据集](#datasets)、[层](#layers)和 [特征列](#feature_columns)）。
+  * 构建自己的训练循环，而不是使用
+    [Estimator 提供](/docs/tensorflow/guide/premade_estimators)的训练循环。
 
-We recommend using the higher level APIs to build models when possible.
-Knowing TensorFlow Core is valuable for the following reasons:
+我们建议尽可能使用更高阶的 API 构建模型。以下是 TensorFlow Core 为何很重要的原因：
 
-  * Experimentation and debugging are both more straight forward
-    when you can use low level TensorFlow operations directly.
-  * It gives you a mental model of how things work internally when
-    using the higher level APIs.
+  * 如果您能够直接使用低阶 TensorFlow 操作，实验和调试都会更直接。
+  * 在使用更高阶的 API 时，能够理解其内部工作原理。
 
-## Setup
+## 设置
 
-Before using this guide, [install TensorFlow](../install).
+在使用本指南之前，请先[安装 TensorFlow](/docs/tensorflow/install)。
 
-To get the most out of this guide, you should know the following:
+要充分理解本指南中的内容，您应当具备以下方面的知识：
 
-*   How to program in Python.
-*   At least a little bit about arrays.
-*   Ideally, something about machine learning.
+* 如何使用 Python 编程。
+* 对阵列有所了解。
+* 理想情况下，最好对机器学习有一定的了解。
 
-Feel free to launch `python` and follow along with this walkthrough.
-Run the following lines to set up your Python environment:
+您随时可以启动 `python`，并按照以下演示进行操作。运行以下行来设置您的 Python 环境：
 
 ```python
 from __future__ import absolute_import
@@ -41,13 +34,9 @@ import numpy as np
 import tensorflow as tf
 ```
 
-## Tensor Values
+## 张量值
 
-The central unit of data in TensorFlow is the **tensor**. A tensor consists of a
-set of primitive values shaped into an array of any number of dimensions. A
-tensor's **rank** is its number of dimensions, while its **shape** is a tuple
-of integers specifying the array's length along each dimension. Here are some
-examples of tensor values:
+TensorFlow 中的核心数据单位是张量。一个张量由一组形成阵列（任意维数）的原始值组成。张量的阶是它的维数，而它的形状是一个整数元组，指定了阵列每个维度的长度。以下是张量值的一些示例：
 
 ```python
 3. # a rank 0 tensor; a scalar with shape [],
@@ -56,35 +45,26 @@ examples of tensor values:
 [[[1., 2., 3.]], [[7., 8., 9.]]] # a rank 3 tensor with shape [2, 1, 3]
 ```
 
-TensorFlow uses numpy arrays to represent tensor **values**.
+TensorFlow 使用 numpy 阵列来表示张量值。
 
-## TensorFlow Core Walkthrough
+## TensorFlow Core 演示
 
-You might think of TensorFlow Core programs as consisting of two discrete
-sections:
+您可以将 TensorFlow Core 程序看作由两个互相独立的部分组成：
 
-1.  Building the computational graph (a `tf.Graph`).
-2.  Running the computational graph (using a `tf.Session`).
+- 构建计算图 (`tf.Graph`)。
+- 运行计算图（使用 `tf.Session`）。
 
-### Graph
 
-A **computational graph** is a series of TensorFlow operations arranged into a
-graph. The graph is composed of two types of objects.
+### 图
 
-  * `tf.Operation` (or "ops"): The nodes of the graph.
-    Operations describe calculations that consume and produce tensors.
-  * `tf.Tensor`: The edges in the graph. These represent the values
-    that will flow through the graph. Most TensorFlow functions return
-    `tf.Tensors`.
+**计算图**是排列成一个图的一系列 TensorFlow 指令。图由两种类型的对象组成。
 
-Important: `tf.Tensors` do not have values, they are just handles to elements
-in the computation graph.
+  * 操作（简称“op”）：图的节点。操作描述了消耗和生成张量的计算。
+  * 张量：图的边。它们代表将流经图的值。大多数 TensorFlow 函数会返回 `tf.Tensors`。
 
-Let's build a simple computational graph. The most basic operation is a
-constant. The Python function that builds the operation takes a tensor value as
-input. The resulting operation takes no inputs. When run, it outputs the
-value that was passed to the constructor. We can create two floating point
-constants `a` and `b` as follows:
+> 重要提示：tf.Tensors 不具有值，它们只是计算图中元素的手柄。
+
+我们来构建一个简单的计算图。最基本的指令是一个常量。构建指令的 Python 函数将一个张量值作为输入值。生成的指令不需要输入值。它在运行时输出的是被传递给构造函数的值。我们可以创建如下所示的两个浮点数常量 `a` 和 `b`：
 
 ```python
 a = tf.constant(3.0, dtype=tf.float32)
@@ -95,7 +75,7 @@ print(b)
 print(total)
 ```
 
-The print statements produce:
+打印语句会生成：
 
 ```
 Tensor("Const:0", shape=(), dtype=float32)
@@ -103,90 +83,69 @@ Tensor("Const_1:0", shape=(), dtype=float32)
 Tensor("add:0", shape=(), dtype=float32)
 ```
 
-Notice that printing the tensors does not output the values `3.0`, `4.0`, and
-`7.0` as you might expect. The above statements only build the computation
-graph. These `tf.Tensor` objects just represent the results of the operations
-that will be run.
+请注意，打印张量并不会如您可能预期的那样输出值 `3.0`、`4.0` 和 `7.0`。上述语句只会构建计算图。这些 `tf.Tensor` 对象仅代表将要运行的操作的结果。
 
-Each operation in a graph is given a unique name. This name is independent of
-the names the objects are assigned to in Python. Tensors are named after the
-operation that produces them followed by an output index, as in
-`"add:0"` above.
+图中的每个指令都拥有唯一的名称。这个名称不同于使用 Python 分配给相应对象的名称。张量是根据生成它们的指令命名的，后面跟着输出索引，如上文的 `"add:0"` 所示。
 
 ### TensorBoard
 
-TensorFlow provides a utility called TensorBoard. One of TensorBoard's many
-capabilities is visualizing a computation graph. You can easily do this with
-a few simple commands.
+TensorFlow 提供了一个名为 TensorBoard 的实用程序。TensorBoard 的诸多功能之一是将计算图可视化。您只需要使用几个简单的命令就能轻松完成此操作。
 
-First you save the computation graph to a TensorBoard summary file as
-follows:
+首先将计算图保存为 TensorBoard 摘要文件，具体操作如下所示：
 
 ```
 writer = tf.summary.FileWriter('.')
 writer.add_graph(tf.get_default_graph())
 ```
 
-This will produce an `event` file in the current directory with a name in the
-following format:
+这将在当前目录中生成一个 `event` 文件，其名称格式如下：
 
 ```
 events.out.tfevents.{timestamp}.{hostname}
 ```
 
-Now, in a new terminal, launch TensorBoard with the following shell command:
+现在，在新的终端中使用以下 shell 命令启动 TensorBoard：
 
 ```bsh
 tensorboard --logdir .
 ```
 
-Then open TensorBoard's [graphs page](http://localhost:6006/#graphs) in your
-browser, and you should see a graph similar to the following:
+接下来，在您的浏览器中打开 TensorBoard 的[图页面](http://localhost:6006/#graphs)，您应该会看到与以下图形类似的图：
 
-![TensorBoard screenshot](https://www.tensorflow.org/images/getting_started_add.png)
+![TensorBoard screenshot](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/getting_started_add.png)
 
-For more about TensorBoard's graph visualization tools see [TensorBoard: Graph Visualization](../guide/graph_viz.md).
+要详细了解 TensorBoard 的计算图可视化工具，请参阅 [TensorBoard：图的直观展示](/docs/tensorflow/guide/graph_viz)。
 
-### Session
+### 会话 (Session)
 
-To evaluate tensors, instantiate a `tf.Session` object, informally known as a
-**session**. A session encapsulates the state of the TensorFlow runtime, and
-runs TensorFlow operations. If a `tf.Graph` is like a `.py` file, a `tf.Session`
-is like the `python` executable.
+要评估张量，需要实例化一个 `tf.Session` 对象（非正式名称为**会话**）。会话会封装 TensorFlow 运行时的状态，并运行 TensorFlow 操作。如果说 `tf.Graph` 像一个 `.py` 文件，那么 `tf.Session` 就像一个 python 可执行对象。
 
-The following code creates a `tf.Session` object and then invokes its `run`
-method to evaluate the `total` tensor we created above:
+下面的代码会创建一个 `tf.Session` 对象，然后调用其 `run` 方法来评估我们在上文中创建的 `total` 张量：
 
 ```python
 sess = tf.Session()
 print(sess.run(total))
 ```
 
-When you request the output of a node with `Session.run` TensorFlow backtracks
-through the graph and runs all the nodes that provide input to the requested
-output node. So this prints the expected value of 7.0:
+当您使用 `Session.run` 请求输出节点时，TensorFlow 会回溯整个图，并流经提供了所请求的输出节点对应的输入值的所有节点。因此此指令会打印预期的值 7.0：
 
 ```
 7.0
 ```
 
-You can pass multiple tensors to `tf.Session.run`. The `run` method
-transparently handles any combination of tuples or dictionaries, as in the
-following example:
+您可以将多个张量传递给 `tf.Session.run`。`run` 方法以透明方式处理元组或字典的任何组合，如下例所示：
 
 ```python
 print(sess.run({'ab':(a, b), 'total':total}))
 ```
 
-which returns the results in a structure of the same layout:
+它返回的结果拥有相同的布局结构：
 
 ``` None
 {'total': 7.0, 'ab': (3.0, 4.0)}
 ```
 
-During a call to `tf.Session.run` any `tf.Tensor` only has a single value.
-For example, the following code calls `tf.random_uniform` to produce a
-`tf.Tensor` that generates a random 3-element vector (with values in `[0,1)`):
+在调用 `tf.Session.run` 期间，任何 `tf.Tensor` 都只有单个值。例如，以下代码调用 `tf.random_uniform` 来生成一个 `tf.Tensor`，后者会生成随机的三元素矢量（值位于 `[0,1)` 区间内）：
 
 ```python
 vec = tf.random_uniform(shape=(3,))
@@ -197,9 +156,7 @@ print(sess.run(vec))
 print(sess.run((out1, out2)))
 ```
 
-The result shows a different random value on each call to `run`, but
-a consistent value during a single `run` (`out1` and `out2` receive the same
-random input):
+每次调用 `run` 时，结果都会显示不同的随机值，但在单个 `run` 期间（`out1` 和 `out2` 接收到相同的随机输入值），结果显示的值是一致的：
 
 ```
 [ 0.52917576  0.64076328  0.68353939]
@@ -210,18 +167,11 @@ random input):
 )
 ```
 
-Some TensorFlow functions return `tf.Operations` instead of `tf.Tensors`.
-The result of calling `run` on an Operation is `None`. You run an operation
-to cause a side-effect, not to retrieve a value. Examples of this include the
-[initialization](#Initializing Layers), and [training](#Training) ops
-demonstrated later.
+部分 TensorFlow 函数会返回 `tf.Operations`，而不是 `tf.Tensors`。对指令调用 `run` 的结果是 `None`。您运行指令是为了产生副作用，而不是为了检索一个值。这方面的例子包括稍后将演示的[初始化](#Initializing Layers)和[训练](#Training)操作。
 
-### Feeding
+### 供给
 
-As it stands, this graph is not especially interesting because it always
-produces a constant result. A graph can be parameterized to accept external
-inputs, known as **placeholders**. A **placeholder** is a promise to provide a
-value later, like a function argument.
+目前来讲，这个图不是特别有趣，因为它总是生成一个常量结果。图可以参数化以便接受外部输入，也称为占位符。占位符表示承诺在稍后提供值，它就像函数参数。
 
 ```python
 x = tf.placeholder(tf.float32)
@@ -229,39 +179,28 @@ y = tf.placeholder(tf.float32)
 z = x + y
 ```
 
-The preceding three lines are a bit like a function in which we
-define two input parameters (`x` and `y`) and then an operation on them. We can
-evaluate this graph with multiple inputs by using the `feed_dict` argument of
-the `tf.Session.run` method to feed concrete values to the placeholders:
+前面三行有点像函数。我们定义了这个函数的两个输入参数（`x` 和 `y`），然后对它们运行指令。我们可以使用 `run` 方法的 `feed_dict` 参数为占位符提供具体的值，从而评估这个具有多个输入的图：
 
 ```python
 print(sess.run(z, feed_dict={x: 3, y: 4.5}))
 print(sess.run(z, feed_dict={x: [1, 3], y: [2, 4]}))
 ```
-This results in the following output:
+上述操作的结果是输出以下内容：
 
 ```
 7.5
 [ 3.  7.]
 ```
 
-Also note that the `feed_dict` argument can be used to overwrite any tensor in
-the graph. The only difference between placeholders and other `tf.Tensors` is
-that placeholders throw an error if no value is fed to them.
+另请注意，`feed_dict` 参数可用于覆盖图中的任何张量。占位符和其他 `tf.Tensors` 的唯一不同之处在于如果没有为占位符提供值，那么占位符会抛出错误。
 
-## Datasets
+## 数据集
 
-Placeholders work for simple experiments, but `tf.data` are the
-preferred method of streaming data into a model.
+占位符适用于简单的实验，而数据集是将数据流式传输到模型的首选方法。
 
-To get a runnable `tf.Tensor` from a Dataset you must first convert it to a
-`tf.data.Iterator`, and then call the Iterator's
-`tf.data.Iterator.get_next` method.
+要从数据集中获取可运行的 `tf.Tensor`，您必须先将其转换成 `tf.data.Iterator`，然后调用迭代器的 `get_next` 方法。
 
-The simplest way to create an Iterator is with the
-`tf.data.Dataset.make_one_shot_iterator` method.
-For example, in the following code the `next_item` tensor will return a row from
-the `my_data` array on each `run` call:
+创建迭代器的最简单的方式是采用 `make_one_shot_iterator` 方法。例如，在下面的代码中，`next_item` 张量将在每次 `run` 调用时从 `my_data` 阵列返回一行：
 
 ``` python
 my_data = [
@@ -274,9 +213,7 @@ slices = tf.data.Dataset.from_tensor_slices(my_data)
 next_item = slices.make_one_shot_iterator().get_next()
 ```
 
-Reaching the end of the data stream causes `Dataset` to throw an
-`tf.errors.OutOfRangeError`. For example, the following code
-reads the `next_item` until there is no more data to read:
+到达数据流末端时，`Dataset` 会抛出 `OutOfRangeError`。例如，下面的代码会一直读取 `next_item`，直到没有数据可读：
 
 ``` python
 while True:
@@ -286,8 +223,7 @@ while True:
     break
 ```
 
-If the `Dataset` depends on stateful operations you may need to
-initialize the iterator before using it, as shown below:
+如果 `Dataset` 依赖于有状态操作，则可能需要在使用迭代器之前先初始化它，如下所示：
 
 ``` python
 r = tf.random_normal([10,3])
@@ -303,27 +239,17 @@ while True:
     break
 ```
 
-For more details on Datasets and Iterators see: [Importing Data](../guide/datasets.md).
+要详细了解数据集和迭代器，请参阅[导入数据](/docs/tensorflow/guide/datasets)。
 
-## Layers
+## 层
 
-A trainable model must modify the values in the graph to get new outputs with
-the same input.  `tf.layers` are the preferred way to add trainable
-parameters to a graph.
+可训练的模型必须修改图中的值，以便在输入相同值的情况下获得新的输出值。将可训练参数添加到图中的首选方法是层。
 
-Layers package together both the variables and the operations that act
-on them. For example a
-[densely-connected layer](https://developers.google.com/machine-learning/glossary/#fully_connected_layer)
-performs a weighted sum across all inputs
-for each output and applies an optional
-[activation function](https://developers.google.com/machine-learning/glossary/#activation_function).
-The connection weights and biases are managed by the layer object.
+层将变量和作用于它们的操作打包在一起。例如，[密集连接层](https://developers.google.com/machine-learning/glossary/#fully_connected_layer)会对每个输出对应的所有输入执行加权和，并应用[激活函数](https://developers.google.com/machine-learning/glossary/#activation_function)可选）。连接权重和偏差由层对象管理。
 
-### Creating Layers
+### 创建层
 
-The following code creates a `tf.layers.Dense` layer that takes a
-batch of input vectors, and produces a single output value for each. To apply a
-layer to an input, call the layer as if it were a function. For example:
+下面的代码会创建一个 `Dense` 层，该层会接受一批输入矢量，并为每个矢量生成一个输出值。要将层应用于输入值，请将该层当做函数来调用。例如：
 
 ```python
 x = tf.placeholder(tf.float32, shape=[None, 3])
@@ -331,54 +257,41 @@ linear_model = tf.layers.Dense(units=1)
 y = linear_model(x)
 ```
 
-The layer inspects its input to determine sizes for its internal variables. So
-here we must set the shape of the `x` placeholder so that the layer can
-build a weight matrix of the correct size.
+层会检查其输入数据，以确定其内部变量的大小。因此，我们必须在这里设置 `x` 占位符的形状，以便层构建正确大小的权重矩阵。
 
-Now that we have defined the calculation of the output, `y`, there is one more
-detail we need to take care of before we run the calculation.
+我们现在已经定义了输出值 `y` 的计算，在我们运行计算之前，还需要处理一个细节。
 
-### Initializing Layers
+### 初始化层
 
-The layer contains variables that must be **initialized** before they can be
-used. While it is possible to initialize variables individually, you can easily
-initialize all the variables in a TensorFlow graph as follows:
+层包含的变量必须先**初始化**，然后才能使用。尽管可以单独初始化各个变量，但也可以轻松地初始化一个 TensorFlow 图中的所有变量（如下所示）：
 
 ```python
 init = tf.global_variables_initializer()
 sess.run(init)
 ```
 
-Important: Calling `tf.global_variables_initializer` only
-creates and returns a handle to a TensorFlow operation. That op
-will initialize all the global variables when we run it with `tf.Session.run`.
+> 重要提示：调用 tf.global_variables_initializer 仅会创建并返回 TensorFlow 操作的句柄。当我们使用 tf.Session.run 运行该操作时，该操作将初始化所有全局变量。
 
-Also note that this `global_variables_initializer` only initializes variables
-that existed in the graph when the  initializer was created. So the initializer
-should be one of the last things added during graph construction.
+另请注意，此 `global_variables_initializer` 仅会初始化创建初始化程序时图中就存在的变量。因此您应该在构建图表的最后一步添加初始化程序。
 
-### Executing Layers
+### 执行层
 
-Now that the layer is initialized, we can evaluate the `linear_model`'s output
-tensor as we would any other tensor. For example, the following code:
+我们现在已经完成了层的初始化，可以像处理任何其他张量一样评估 `linear_model` 的输出张量了。例如，下面的代码：
 
 ```python
 print(sess.run(y, {x: [[1, 2, 3],[4, 5, 6]]}))
 ```
 
-will generate a two-element output vector such as the following:
+会生成一个两元素输出向量，如下所示：
 
 ```
 [[-3.41378999]
  [-9.14999008]]
 ```
 
-### Layer Function shortcuts
+### 层函数的快捷方式
 
-For each layer class (like `tf.layers.Dense`) TensorFlow also supplies a
-shortcut function (like `tf.layers.dense`). The only difference is that the
-shortcut function versions create and run the layer in a single call. For
-example, the following code is equivalent to the earlier version:
+对于每个层类（如 `tf.layers.Dense`)，TensorFlow 还提供了一个快捷函数（如 `tf.layers.dense`）。两者唯一的区别是快捷函数版本是在单次调用中创建和运行层。例如，以下代码等同于较早的版本：
 
 ```python
 x = tf.placeholder(tf.float32, shape=[None, 3])
@@ -390,17 +303,12 @@ sess.run(init)
 print(sess.run(y, {x: [[1, 2, 3], [4, 5, 6]]}))
 ```
 
-While convenient, this approach allows no access to the `tf.layers.Layer`
-object. This makes introspection and debugging more difficult,
-and layer reuse impossible.
+尽管这种方法很方便，但无法访问 `tf.layers.Layer` 对象。这会让自省和调试变得更加困难，并且无法重复使用相应的层。
 
-## Feature columns
+## 特征列
 
-The easiest way to experiment with feature columns is using the
-`tf.feature_column.input_layer` function. This function only accepts
-[dense columns](../guide/feature_columns.md) as inputs, so to view the result
-of a categorical column you must wrap it in an
-`tf.feature_column.indicator_column`. For example:
+使用特征列进行实验的最简单方法是使用 `tf.feature_column.input_layer` 函数。此函数只接受[密集列](/docs/tensorflow/guide/feature_columns) 
+作为输入，因此要查看类别列的结果，您必须将其封装在 `tf.feature_column.indicator_column` 中。例如：
 
 ``` python
 features = {
@@ -419,12 +327,9 @@ columns = [
 inputs = tf.feature_column.input_layer(features, columns)
 ```
 
-Running the `inputs` tensor will parse the `features` into a batch of vectors.
+运行 `inputs` 张量会将 `features` 解析为一批向量。
 
-Feature columns can have internal state, like layers, so they often need to be
-initialized. Categorical columns use `tf.contrib.lookup`
-internally and these require a separate initialization op,
-`tf.tables_initializer`.
+特征列和层一样具有内部状态，因此通常需要将它们初始化。类别列会在内部使用对照表，而这些表需要单独的初始化操作 `tf.tables_initializer`。
 
 ``` python
 var_init = tf.global_variables_initializer()
@@ -433,15 +338,13 @@ sess = tf.Session()
 sess.run((var_init, table_init))
 ```
 
-Once the internal state has been initialized you can run `inputs` like any
-other `tf.Tensor`:
+初始化内部状态后，您可以运行 `inputs`（像运行任何其他 `tf.Tensor` 一样）：
 
 ```python
 print(sess.run(inputs))
 ```
 
-This shows how the feature columns have packed the input vectors, with the
-one-hot "department" as the first two indices and "sales" as the third.
+这显示了特征列如何打包输入矢量，并将独热“department”作为第一和第二个索引，将“sales”作为第三个索引。
 
 ```None
 [[  1.   0.   5.]
@@ -450,24 +353,22 @@ one-hot "department" as the first two indices and "sales" as the third.
  [  0.   1.   9.]]
 ```
 
-## Training
+## 训练
 
-Now that you're familiar with the basics of core TensorFlow, let's train a
-small regression model manually.
+您现在已经了解 TensorFlow 核心部分的基础知识了，我们来手动训练一个小型回归模型吧。
 
-### Define the data
+### 定义数据
 
-First let's define some inputs, `x`, and the expected output for each input,
-`y_true`:
+我们首先来定义一些输入值 `x`，以及每个输入值的预期输出值 `y_true`：
 
 ```python
 x = tf.constant([[1], [2], [3], [4]], dtype=tf.float32)
 y_true = tf.constant([[0], [-1], [-2], [-3]], dtype=tf.float32)
 ```
 
-### Define the model
+### 定义模型
 
-Next, build a simple linear model, with 1 output:
+接下来，建立一个简单的线性模型，其输出值只有 1 个：
 
 ``` python
 linear_model = tf.layers.Dense(units=1)
@@ -475,7 +376,7 @@ linear_model = tf.layers.Dense(units=1)
 y_pred = linear_model(x)
 ```
 
-You can evaluate the predictions as follows:
+您可以如下评估预测值：
 
 ``` python
 sess = tf.Session()
@@ -485,8 +386,7 @@ sess.run(init)
 print(sess.run(y_pred))
 ```
 
-The model hasn't yet been trained, so the four "predicted" values aren't very
-good. Here's what we got; your own output will almost certainly differ:
+该模型尚未接受训练，因此四个“预测”值并不理想。以下是我们得到的结果，您自己的输出应该有所不同：
 
 ``` None
 [[ 0.02631879]
@@ -495,46 +395,33 @@ good. Here's what we got; your own output will almost certainly differ:
  [ 0.10527515]]
 ```
 
-### Loss
+### 损失
 
-To optimize a model, you first need to define the loss. We'll use the mean
-square error, a standard loss for regression problems.
+要优化模型，您首先需要定义损失。我们将使用均方误差，这是回归问题的标准损失。
 
-While you could do this manually with lower level math operations,
-the `tf.losses` module provides a set of common loss functions. You can use it
-to calculate the mean square error as follows:
+虽然您可以使用较低级别的数学运算手动定义，但 `tf.losses` 模块提供了一系列常用的损失函数。您可以使用它来计算均方误差，具体操作如下所示：
 
 ``` python
 loss = tf.losses.mean_squared_error(labels=y_true, predictions=y_pred)
 
 print(sess.run(loss))
 ```
-This will produce a loss value, something like:
+这会生成如下所示的一个损失值：
 
 ``` None
 2.23962
 ```
 
-### Training
+### 训练
 
-TensorFlow provides
-[**optimizers**](https://developers.google.com/machine-learning/glossary/#optimizer)
-implementing standard optimization algorithms. These are implemented as
-sub-classes of `tf.train.Optimizer`. They incrementally change each
-variable in order to minimize the loss. The simplest optimization algorithm is
-[**gradient descent**](https://developers.google.com/machine-learning/glossary/#gradient_descent),
-implemented by `tf.train.GradientDescentOptimizer`. It modifies each
-variable according to the magnitude of the derivative of loss with respect to
-that variable. For example:
+TensorFlow 提供了执行标准优化算法的**优化器**。这些优化器被实现为 `tf.train.Optimizer` 的子类。它们会逐渐改变每个变量，以便将损失最小化。最简单的优化算法是**梯度下降法**，由 `tf.train.GradientDescentOptimizer` 实现。它会根据损失相对于变量的导数大小来修改各个变量。例如：
 
 ```python
 optimizer = tf.train.GradientDescentOptimizer(0.01)
 train = optimizer.minimize(loss)
 ```
 
-This code builds all the graph components necessary for the optimization, and
-returns a training operation. When run, the training op will update variables
-in the graph. You might run it as follows:
+该代码构建了优化所需的所有图组件，并返回一个训练指令。该训练指令在运行时会更新图中的变量。您可以按以下方式运行该指令：
 
 ```python
 for i in range(100):
@@ -542,9 +429,7 @@ for i in range(100):
   print(loss_value)
 ```
 
-Since `train` is an op, not a tensor, it doesn't return a value when run.
-To see the progression of the loss during training, we run the loss tensor at
-the same time, producing output like the following:
+由于 `train` 是一个指令而不是张量，因此它在运行时不会返回一个值。为了查看训练期间损失的进展，我们会同时运行损失张量，生成如下所示的输出值：
 
 ``` None
 1.35659
@@ -560,7 +445,7 @@ the same time, producing output like the following:
 ...
 ```
 
-### Complete program
+### 完整程序
 
 ```python
 x = tf.constant([[1], [2], [3], [4]], dtype=tf.float32)
@@ -585,20 +470,14 @@ for i in range(100):
 print(sess.run(y_pred))
 ```
 
-## Next steps
+## 后续步骤
 
-To learn more about building models with TensorFlow consider the following:
+要详细了解如何使用 TensorFlow 构建模型，请参阅以下内容：
 
-* [Custom Estimators](../guide/custom_estimators.md), to learn how to build
-  customized models with TensorFlow. Your knowledge of TensorFlow Core will
-  help you understand and debug your own models.
+* [自定义 Estimator](/docs/tensorflow/guide/custom_estimators)，了解如何使用 TensorFlow 构建自定义模型。掌握 TensorFlow Core 知识有助于理解和调试您自己的模型。
 
-If you want to learn more about the inner workings of TensorFlow consider the
-following documents, which go into more depth on many of the topics discussed
-here:
+如果您想详细了解 TensorFlow 的内部工作原理，请参阅以下文档。这些文档深入探讨了这篇文章中提及的许多主题：
 
-* [Graphs and Sessions](../guide/graphs.md)
-* [Tensors](../guide/tensors.md)
-* [Variables](../guide/variables.md)
-
-
+* [图和会话](/docs/tensorflow/guide/graphs)
+* [张量](/docs/tensorflow/guide/tensors)
+* [变量](/docs/tensorflow/guide/variables)
