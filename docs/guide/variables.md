@@ -1,84 +1,58 @@
-# Variables
+#  变量
 
-A TensorFlow **variable** is the best way to represent shared, persistent state
-manipulated by your program.
+TensorFlow 变量是表示程序处理的共享持久状态的最佳方法。
 
-Variables are manipulated via the `tf.Variable` class. A `tf.Variable`
-represents a tensor whose value can be changed by running ops on it. Unlike
-`tf.Tensor` objects, a `tf.Variable` exists outside the context of a single
-`session.run` call.
+我们使用 `tf.Variable` 类操作变量。`tf.Variable` 表示可通过对其运行操作来改变其值的张量。与 `tf.Tensor` 对象不同，`tf.Variable` 存在于单个 `session.run` 调用的上下文之外。
 
-Internally, a `tf.Variable` stores a persistent tensor. Specific ops allow you
-to read and modify the values of this tensor. These modifications are visible
-across multiple `tf.Session`s, so multiple workers can see the same values for a
-`tf.Variable`.
+在 TensorFlow 内部，`tf.Variable` 会存储持久性张量。具体 op 允许您读取和修改此张量的值。这些修改在多个 `tf.Session` 之间是可见的，因此对于一个 tf.Variable，多个工作器可以看到相同的值。
 
-## Creating a Variable
+## 创建变量
 
-The best way to create a variable is to call the `tf.get_variable`
-function. This function requires you to specify the Variable's name. This name
-will be used by other replicas to access the same variable, as well as to name
-this variable's value when checkpointing and exporting models. `tf.get_variable`
-also allows you to reuse a previously created variable of the same name, making it
-easy to define models which reuse layers.
+创建变量的最佳方式是调用 `tf.get_variable` 函数。此函数要求您指定变量的名称。其他副本将使用此名称访问同一变量，以及在对模型设置检查点和导出模型时指定此变量的值。`tf.get_variable` 还允许您重复使用先前创建的同名变量，从而轻松定义重复利用层的模型。
 
-To create a variable with `tf.get_variable`, simply provide the name and shape
+要使用 `tf.get_variable` 创建变量，只需提供名称和形状即可
 
 ``` python
 my_variable = tf.get_variable("my_variable", [1, 2, 3])
 ```
 
-This creates a variable named "my_variable" which is a three-dimensional tensor
-with shape `[1, 2, 3]`. This variable will, by default, have the `dtype`
-`tf.float32` and its initial value will be randomized via
-`tf.glorot_uniform_initializer`.
+这将创建一个名为“my_variable”的变量，该变量是形状为 `[1, 2, 3]` 的三维张量。默认情况下，此变量将具有 `dtypetf.float32`，其初始值将通过 `tf.glorot_uniform_initializer` 随机设置。
 
-You may optionally specify the `dtype` and initializer to `tf.get_variable`. For
-example:
+您可以选择为 `tf.get_variable` 指定 `dtype` 和初始化器。例如：
 
 ``` python
 my_int_variable = tf.get_variable("my_int_variable", [1, 2, 3], dtype=tf.int32,
   initializer=tf.zeros_initializer)
 ```
 
-TensorFlow provides many convenient initializers. Alternatively, you may
-initialize a `tf.Variable` to have the value of a `tf.Tensor`. For example:
+TensorFlow 提供了许多方便的初始化器。或者，您也可以将 `tf.Variable` 初始化为 `tf.Tensor` 的值。例如：
 
 ``` python
 other_variable = tf.get_variable("other_variable", dtype=tf.int32,
   initializer=tf.constant([23, 42]))
 ```
 
-Note that when the initializer is a `tf.Tensor` you should not specify the
-variable's shape, as the shape of the initializer tensor will be used.
+请注意，当初始化器是 `tf.Tensor` 时，您不应指定变量的形状，因为将使用初始化器张量的形状。
 
 
 <a name="collections"></a>
-### Variable collections
+### 变量集合
 
-Because disconnected parts of a TensorFlow program might want to create
-variables, it is sometimes useful to have a single way to access all of
-them. For this reason TensorFlow provides **collections**, which are named lists
-of tensors or other objects, such as `tf.Variable` instances.
+由于 TensorFlow 程序的未连接部分可能需要创建变量，因此能有一种方式访问所有变量有时十分受用。为此，TensorFlow 提供了集合，它们是张量或其他对象（如 `tf.Variable` 实例）的命名列表。
 
-By default every `tf.Variable` gets placed in the following two collections:
+默认情况下，每个 `tf.Variable` 都放置在以下两个集合中：
 
- * `tf.GraphKeys.GLOBAL_VARIABLES` --- variables that can be shared across
-   multiple devices,
- * `tf.GraphKeys.TRAINABLE_VARIABLES` --- variables for which TensorFlow will
-   calculate gradients.
+- `tf.GraphKeys.GLOBAL_VARIABLES` - 可以在多台设备间共享的变量，
+- `tf.GraphKeys.TRAINABLE_VARIABLES` - TensorFlow 将计算其梯度的变量。
 
-If you don't want a variable to be trainable, add it to the
-`tf.GraphKeys.LOCAL_VARIABLES` collection instead. For example, the following
-snippet demonstrates how to add a variable named `my_local` to this collection:
+如果您不希望变量可训练，可以将其添加到 `tf.GraphKeys.LOCAL_VARIABLES` 集合中。例如，以下代码段展示了如何将名为 `my_local` 的变量添加到此集合中：
 
 ``` python
 my_local = tf.get_variable("my_local", shape=(),
 collections=[tf.GraphKeys.LOCAL_VARIABLES])
 ```
 
-Alternatively, you can specify `trainable=False` as an argument to
-`tf.get_variable`:
+或者，您可以指定 `trainable=False`（作为 `tf.get_variable` 的参数）：
 
 ``` python
 my_non_trainable = tf.get_variable("my_non_trainable",
@@ -87,40 +61,28 @@ my_non_trainable = tf.get_variable("my_non_trainable",
 ```
 
 
-You can also use your own collections. Any string is a valid collection name,
-and there is no need to explicitly create a collection. To add a variable (or
-any other object) to a collection after creating the variable, call
-`tf.add_to_collection`.  For example, the following code adds an existing
-variable named `my_local` to a collection named `my_collection_name`:
+您也可以使用自己的集合。集合名称可为任何字符串，且您无需显式创建集合。创建变量（或任何其他对象）后，要将其添加到集合中，请调用 `tf.add_to_collection`。例如，以下代码将名为 `my_local` 的现有变量添加到名为 `my_collection_name` 的集合中：
 
 ``` python
 tf.add_to_collection("my_collection_name", my_local)
 ```
 
-And to retrieve a list of all the variables (or other objects) you've placed in
-a collection you can use:
+要检索您放置在某个集合中的所有变量（或其他对象）的列表，您可以使用：
 
 ``` python
 tf.get_collection("my_collection_name")
 ```
 
-### Device placement
+### 设备放置方式
 
-Just like any other TensorFlow operation, you can place variables on particular
-devices. For example, the following snippet creates a variable named `v` and
-places it on the second GPU device:
+与任何其他 TensorFlow 指令一样，您可以将变量放置在特定设备上。例如，以下代码段创建了名为 `v` 的变量并将其放置在第二个 GPU 设备上：
 
 ``` python
 with tf.device("/device:GPU:1"):
   v = tf.get_variable("v", [1])
 ```
 
-It is particularly important for variables to be in the correct device in
-distributed settings. Accidentally putting variables on workers instead of
-parameter servers, for example, can severely slow down training or, in the worst
-case, let each worker blithely forge ahead with its own independent copy of each
-variable. For this reason we provide `tf.train.replica_device_setter`, which
-can automatically place variables in parameter servers. For example:
+在分布式设置中，将变量放置在正确设备上尤为重要。如果不小心将变量放在工作器而不是参数服务器上，可能会严重减慢训练速度，最坏的情况下，可能会让每个工作器不断复制各个变量。为此，我们提供了 `tf.train.replica_device_setter`，它可以自动将变量放置在参数服务器中。例如：
 
 ``` python
 cluster_spec = {
@@ -132,64 +94,43 @@ with tf.device(tf.train.replica_device_setter(cluster=cluster_spec)):
                                             # by the replica_device_setter
 ```
 
-## Initializing variables
+## 初始化变量
 
-Before you can use a variable, it must be initialized. If you are programming in
-the low-level TensorFlow API (that is, you are explicitly creating your own
-graphs and sessions), you must explicitly initialize the variables.  Most
-high-level frameworks such as `tf.contrib.slim`, `tf.estimator.Estimator` and
-`Keras` automatically initialize variables for you before training a model.
+变量必须先初始化后才可使用。如果您在低级别 TensorFlow API 中进行编程（即您在显式创建自己的图和会话），则必须明确初始化变量。`tf.contrib.slim`、`tf.estimator.Estimator` 和 `Keras` 等大多数高级框架在训练模型前会自动为您初始化变量。
 
-Explicit initialization is otherwise useful because it allows you not to rerun
-potentially expensive initializers when reloading a model from a checkpoint as
-well as allowing determinism when randomly-initialized variables are shared in a
-distributed setting.
+显式初始化在其他方面很有用。它允许您在从检查点重新加载模型时不用重新运行潜在资源消耗大的初始化器，并允许在分布式设置中共享随机初始化的变量时具有确定性。
 
-To initialize all trainable variables in one go, before training starts, call
-`tf.global_variables_initializer()`. This function returns a single operation
-responsible for initializing all variables in the
-`tf.GraphKeys.GLOBAL_VARIABLES` collection. Running this operation initializes
-all variables. For example:
+要在训练开始前一次性初始化所有可训练变量，请调用 `tf.global_variables_initializer()`。此函数会返回一个操作，负责初始化 `tf.GraphKeys.GLOBAL_VARIABLES` 集合中的所有变量。运行此操作会初始化所有变量。例如：
 
 ``` python
 session.run(tf.global_variables_initializer())
 # Now all variables are initialized.
 ```
 
-If you do need to initialize variables yourself, you can run the variable's
-initializer operation. For example:
+如果您确实需要自行初始化变量，则可以运行变量的初始化器操作。例如：
 
 ``` python
 session.run(my_variable.initializer)
 ```
 
 
-You can also ask which variables have still not been initialized. For example,
-the following code prints the names of all variables which have not yet been
-initialized:
+您可以查询哪些变量尚未初始化。例如，以下代码会打印所有尚未初始化的变量名称：
 
 ``` python
 print(session.run(tf.report_uninitialized_variables()))
 ```
 
 
-Note that by default `tf.global_variables_initializer` does not specify the
-order in which variables are initialized. Therefore, if the initial value of a
-variable depends on another variable's value, it's likely that you'll get an
-error. Any time you use the value of a variable in a context in which not all
-variables are initialized (say, if you use a variable's value while initializing
-another variable), it is best to use `variable.initialized_value()` instead of
-`variable`:
+请注意，默认情况下，`tf.global_variables_initializer` 不会指定变量的初始化顺序。因此，如果变量的初始值取决于另一变量的值，那么很有可能会出现错误。任何时候，如果您在并非所有变量都已初始化的上下文中使用某个变量值（例如在初始化某个变量时使用另一变量的值），最好使用 `variable.initialized_value()`，而非 `variable`：
 
 ``` python
 v = tf.get_variable("v", shape=(), initializer=tf.zeros_initializer())
 w = tf.get_variable("w", initializer=v.initialized_value() + 1)
 ```
 
-## Using variables
+## 使用变量
 
-To use the value of a `tf.Variable` in a TensorFlow graph, simply treat it like
-a normal `tf.Tensor`:
+要在 TensorFlow 图中使用 `tf.Variable` 的值，只需将其视为普通 `tf.Tensor` 即可：
 
 ``` python
 v = tf.get_variable("v", shape=(), initializer=tf.zeros_initializer())
@@ -198,9 +139,7 @@ w = v + 1  # w is a tf.Tensor which is computed based on the value of v.
            # converted to a tf.Tensor representing its value.
 ```
 
-To assign a value to a variable, use the methods `assign`, `assign_add`, and
-friends in the `tf.Variable` class. For example, here is how you can call these
-methods:
+要为变量赋值，请使用 `assign`、`assign_add` 方法以及 `tf.Variable` 类中的友元。例如，以下就是调用这些方法的方式：
 
 ``` python
 v = tf.get_variable("v", shape=(), initializer=tf.zeros_initializer())
@@ -209,14 +148,9 @@ tf.global_variables_initializer().run()
 sess.run(assignment)  # or assignment.op.run(), or assignment.eval()
 ```
 
-Most TensorFlow optimizers have specialized ops that efficiently update the
-values of variables according to some gradient descent-like algorithm. See
-`tf.train.Optimizer` for an explanation of how to use optimizers.
+大多数 TensorFlow 优化器都有专门的 op，会根据某种梯度下降算法有效地更新变量的值。请参阅 `tf.train.Optimizer`，了解如何使用优化器。
 
-Because variables are mutable it's sometimes useful to know what version of a
-variable's value is being used at any point in time. To force a re-read of the
-value of a variable after something has happened, you can use
-`tf.Variable.read_value`. For example:
+由于变量是可变的，因此及时了解任意时间点所使用的变量值版本有时十分有用。要在事件发生后强制重新读取变量的值，可以使用 `tf.Variable.read_value`。例如：
 
 ``` python
 v = tf.get_variable("v", shape=(), initializer=tf.zeros_initializer())
@@ -227,25 +161,18 @@ with tf.control_dependencies([assignment]):
 ```
 
 
-## Sharing variables
+## 共享变量
 
-TensorFlow supports two ways of sharing variables:
+TensorFlow 支持两种共享变量的方式：
 
- * Explicitly passing `tf.Variable` objects around.
- * Implicitly wrapping `tf.Variable` objects within `tf.variable_scope` objects.
+- 显式传递 `tf.Variable` 对象。
+- 将 `tf.Variable` 对象隐式封装在 `tf.variable_scope` 对象内。
 
-While code which explicitly passes variables around is very clear, it is
-sometimes convenient to write TensorFlow functions that implicitly use
-variables in their implementations. Most of the functional layers from
-`tf.layers` use this approach, as well as all `tf.metrics`, and a few other
-library utilities.
+虽然显式传递变量的代码非常清晰，但有时编写在其实现中隐式使用变量的 TensorFlow 函数非常方便。`tf.layers` 中的大多数功能层以及所有 `tf.metrics` 和部分其他库实用程序都使用这种方法。
 
-Variable scopes allow you to control variable reuse when calling functions which
-implicitly create and use variables. They also allow you to name your variables
-in a hierarchical and understandable way.
+变量作用域允许您在调用隐式创建和使用变量的函数时控制变量重用。作用域还允许您以分层和可理解的方式命名变量。
 
-For example, let's say we write a function to create a convolutional / relu
-layer:
+例如，假设我们编写一个函数来创建一个卷积/relu 层：
 
 ```python
 def conv_relu(input, kernel_shape, bias_shape):
@@ -260,9 +187,7 @@ def conv_relu(input, kernel_shape, bias_shape):
     return tf.nn.relu(conv + biases)
 ```
 
-This function uses short names `weights` and `biases`, which is good for
-clarity. In a real model, however, we want many such convolutional layers, and
-calling this function repeatedly would not work:
+此函数使用短名称 `weights` 和 `biases`，这有利于清晰区分二者。然而，在真实模型中，我们需要很多此类卷积层，而且重复调用此函数将不起作用：
 
 ``` python
 input1 = tf.random_normal([1,10,10,32])
@@ -271,9 +196,7 @@ x = conv_relu(input1, kernel_shape=[5, 5, 32, 32], bias_shape=[32])
 x = conv_relu(x, kernel_shape=[5, 5, 32, 32], bias_shape = [32])  # This fails.
 ```
 
-Since the desired behavior is unclear (create new variables or reuse the
-existing ones?) TensorFlow will fail. Calling `conv_relu` in different scopes,
-however, clarifies that we want to create new variables:
+由于期望的操作不清楚（创建新变量还是重新使用现有变量？），因此 TensorFlow 将会失败。不过，在不同作用域内调用 `conv_relu` 可表明我们想要创建新变量：
 
 ```python
 def my_image_filter(input_images):
@@ -285,8 +208,7 @@ def my_image_filter(input_images):
         return conv_relu(relu1, [5, 5, 32, 32], [32])
 ```
 
-If you do want the variables to be shared, you have two options. First, you can
-create a scope with the same name using `reuse=True`:
+如果您想要共享变量，有两种方法可供选择。首先，您可以使用 `reuse=True` 创建具有相同名称的作用域：
 
 ``` python
 with tf.variable_scope("model"):
@@ -296,7 +218,7 @@ with tf.variable_scope("model", reuse=True):
 
 ```
 
-You can also call `scope.reuse_variables()` to trigger a reuse:
+您也可以调用 `scope.reuse_variables()` 以触发重用：
 
 ``` python
 with tf.variable_scope("model") as scope:
@@ -306,8 +228,7 @@ with tf.variable_scope("model") as scope:
 
 ```
 
-Since depending on exact string names of scopes can feel dangerous, it's also
-possible to initialize a variable scope based on another one:
+由于依赖于作用域的确切字符串名称可能比较危险，因此也可以根据另一作用域初始化某个变量作用域：
 
 ``` python
 with tf.variable_scope("model") as scope:
