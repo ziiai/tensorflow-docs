@@ -4,7 +4,7 @@
 
 ## 保存和恢复变量
 
-TensorFlow [Variables](../guide/variables.md) 是表示由程序操作的共享持久状态的最佳方法。tf.train.Saver 构造函数会针对图中所有变量或指定列表的变量将 save 和 restore 操作添加到图中。Saver 对象提供了运行这些操作的方法，并指定写入或读取检查点文件的路径。
+TensorFlow [Variables](/docs/tensorflow/guide/variables) 是表示由程序操作的共享持久状态的最佳方法。tf.train.Saver 构造函数会针对图中所有变量或指定列表的变量将 save 和 restore 操作添加到图中。Saver 对象提供了运行这些操作的方法，并指定写入或读取检查点文件的路径。
 
 Saver 会恢复已经在模型中定义的所有变量。如果您在不知道如何构建图的情况下加载模型（例如，如果您要编写用于加载各种模型的通用程序），那么请阅读本文档后面的
 [保存和恢复模型概述](#models) 部分。
@@ -209,7 +209,7 @@ builder.save()
 只有在操作集没有变化的情况下，遵循以下指南才能带来向前兼容性。
 
 `SavedModelBuilder` 类允许用户控制在将元图添加到 SavedModel 软件包时，是否必须从
-[`NodeDefs`](../extend/tool_developers/index.md#nodes)
+[`NodeDefs`](/docs/tensorflow/extend/model_files#nodes)
 剥离默认值属性。`SavedModelBuilder.add_meta_graph_and_variables` 和 `SavedModelBuilder.add_meta_graph` 方法都接受控制此行为的布尔标记 `strip_default_attrs`。
 
 如果 `strip_default_attrs` 为 `False`，则导出的 `tf.MetaGraphDef` 将在其所有 `tf.NodeDef` 实例中具有设为默认值的属性。这样会破坏向前兼容性并出现一系列事件，例如：
@@ -219,7 +219,7 @@ builder.save()
 - 运行较旧二进制文件（版本 100）的模型使用方（例如 [Tensorflow Serving](https://tensorflow.google.cn/serving)）在操作 `Foo` 中没有属性 `T`，但会尝试导入此模型。模型使用方无法在使用操作 `Foo` 的 `NodeDef` 中识别属性 `T`，因此无法加载模型。
 - 通过将 `strip_default_attrs` 设置为 `True`，模型提供方可以剥离 `NodeDefs` 中任何具有默认值的属性。这有助于确保新添加的属性（具有默认值）不会导致早期的模型使用方无法加载使用较新的训练二进制文件重新生成的模型。
 
-详情请参阅[兼容性指南](./version_compat.md)。
+详情请参阅[兼容性指南](/docs/tensorflow/guide/version_compat)。
 
 ### 加载 Python 版 SavedModel
 
@@ -302,7 +302,7 @@ SavedModel 为各种用例构建和加载 TensorFlow 图提供了灵活性。对
 
 ### 准备提供输入
 
-在训练期间，[`input_fn()`](../guide/premade_estimators.md#input_fn) 会提取数据，并准备好数据以供模型使用。在提供服务期间，类似地，`serving_input_receiver_fn()` 接受推理请求，并为模型做好准备。该函数具有以下用途：
+在训练期间，[`input_fn()`](/docs/tensorflow/guide/premade_estimators#input_fn) 会提取数据，并准备好数据以供模型使用。在提供服务期间，类似地，`serving_input_receiver_fn()` 接受推理请求，并为模型做好准备。该函数具有以下用途：
 
 - 在投入使用系统将向其发出推理请求的图中添加占位符。
 - 添加将数据从输入格式转换为模型所预期的特征 Tensor 所需的任何额外操作。
@@ -434,7 +434,7 @@ result = stub.Classify(request, 10.0)  # 10 secs timeout
 
 本例中返回的结果是一个 `ClassificationResponse` 协议缓冲区。
 
-这是一个概括性示例；详情请参阅 [Tensorflow Serving](../deploy/index.md)
+这是一个概括性示例；详情请参阅 [Tensorflow Serving](/docs/tensorflow/deploy/index)
 文档和[示例](https://github.com/tensorflow/serving/tree/master/tensorflow_serving/example)。
 
 > 注意：ClassificationRequest 和 RegressionRequest 包含一个 tensorflow.serving.Input 协议缓冲区，该协议缓冲区又包含一系列 tensorflow.Example 协议缓冲区。而与之不同的是，PredictRequest 包含从特征名称到用 TensorProto 进行编码的值的映射。相应地，使用 Classify 和 Regress API 时，TensorFlow Serving 会将序列化 tf.Example 馈送到图中，所以 serving_input_receiver_fn() 应该包含一个 tf.parse_example() 操作。但是如果使用通用 Predict API，TensorFlow Serving 会将原始特征数据馈送到图中，因此应该使用 serving_input_receiver_fn() 进行传递。
@@ -452,7 +452,7 @@ from contrib to core. -->
 ## 使用 CLI 检查并执行 SavedModel
 
 您可以使用 SavedModel 命令行界面 (CLI) 检查并执行 `SavedModel`。例如，您可以使用 CLI 检查模型的 `SignatureDef`。CLI 让您能够快速确认输入的
-[Tensor dtype 和形状](../guide/tensors.md)是否与模型匹配。此外，如果您想测试模型，可以使用 CLI 进行健全性检查，方法是传入各种格式的示例输入（如 Python 表达式），然后获取输出。
+[Tensor dtype 和形状](/docs/tensorflow/guide/tensors)是否与模型匹配。此外，如果您想测试模型，可以使用 CLI 进行健全性检查，方法是传入各种格式的示例输入（如 Python 表达式），然后获取输出。
 
 
 ### 安装 SavedModel CLI
