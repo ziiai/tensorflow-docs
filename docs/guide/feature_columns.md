@@ -1,100 +1,71 @@
-# Feature Columns
+#  特征列
 
-This document details feature columns. Think of **feature columns** as the
-intermediaries between raw data and Estimators. Feature columns are very rich,
-enabling you to transform a diverse range of raw data into formats that
-Estimators can use, allowing easy experimentation.
+本文档详细介绍了特征列。您可以将特征列视为原始数据和 Estimator 之间的媒介。特征列内容丰富，使您可以将各种原始数据转换为 Estimator 可以使用的格式，从而可以轻松地进行实验。
 
-In [Premade Estimators](../guide/premade_estimators.md), we used the premade
-Estimator, `tf.estimator.DNNClassifier` to train a model to
-predict different types of Iris flowers from four input features. That example
-created only numerical feature columns (of type
-`tf.feature_column.numeric_column`). Although numerical feature columns model
-the lengths of petals and sepals effectively, real world data sets contain all
-kinds of features, many of which are non-numerical.
+在 [预创建的 Estimator](/docs/tensorflow/guide/premade_estimators)中，我们使用预创建的 Estimator (`DNNClassifier`) 训练模型，根据四个输入特征预测不同类型的鸢尾花。该示例仅创建了数值特征列（类型为 `tf.feature_column.numeric_column`）。虽然数值特征列有效地对花瓣和花萼的长度进行了建模，但真实的数据集包含各种各样的特征，其中很多特征并非数值。
 
 <div style="width:80%; margin:auto; margin-bottom:10px; margin-top:20px;">
-<img style="width:100%" src="../images/feature_columns/feature_cloud.jpg">
+<img style="width:100%" src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/feature_columns/feature_cloud.jpg">
 </div>
 <div style="text-align: center">
-Some real-world features (such as, longitude) are numerical, but many are not.
+ 一些真实特征（如经度）为数值，但很多并不是数值。
 </div>
 
-## Input to a Deep Neural Network
+## 深度神经网络的输入
 
-What kind of data can a deep neural network operate on? The answer
-is, of course, numbers (for example, `tf.float32`). After all, every neuron in
-a neural network performs multiplication and addition operations on weights and
-input data. Real-life input data, however, often contains non-numerical
-(categorical) data. For example, consider a `product_class` feature that can
-contain the following three non-numerical values:
+深度神经网络可以处理哪类数据？答案当然是数字（例如 `tf.float32`）。毕竟，神经网络中的每个神经元都会对权重和输入数据执行乘法和加法运算。不过，实际输入数据通常包含非数值（分类）数据。以一个可包含下列三个非数值的 `product_class` 特征为例：
 
 * `kitchenware`
 * `electronics`
 * `sports`
 
-ML models generally represent categorical values as simple vectors in which a
-1 represents the presence of a value and a 0 represents the absence of a value.
-For example, when `product_class` is set to `sports`, an ML model would usually
-represent `product_class` as  `[0, 0, 1]`, meaning:
+机器学习模型一般将分类值表示为简单的矢量，其中 1 表示存在某个值，0 表示不存在某个值。例如，如果将 `product_class` 设置为 `sports`，机器学习模型通常将 `product_class` 表示为 `[0, 0, 1]`，意即：
 
-* `0`: `kitchenware` is absent
-* `0`: `electronics` is absent
-* `1`: `sports` is present
+* `0`：`kitchenware`不存在
+* `0`：`electronics`不存在
+* `1`：`sports`不存在
 
-So, although raw data can be numerical or categorical, an ML model represents
-all features as numbers.
+因此，虽然原始数据可以是数值或分类值，但机器学习模型会将所有特征表示为数字。
 
-## Feature Columns
+## 特征列
 
-As the following figure suggests, you specify the input to a model through the
-`feature_columns` argument of an Estimator (`DNNClassifier` for Iris).
-Feature Columns bridge input data (as returned by `input_fn`) with your model.
+如下图所示，您可以通过 Estimator（鸢尾花的 `DNNClassifier`）的 `feature_columns` 参数指定模型的输入。特征列作为输入数据（由 `input_fn` 返回）与模型之间的桥梁。
 
 <div style="width:80%; margin:auto; margin-bottom:10px; margin-top:20px;">
-<img style="width:100%" src="../images/feature_columns/inputs_to_model_bridge.jpg">
+<img style="width:100%" src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/feature_columns/inputs_to_model_bridge.jpg">
 </div>
 <div style="text-align: center">
-Feature columns bridge raw data with the data your model needs.
+特征列作为原始数据与模型所需的数据之间的桥梁。 
 </div>
 
-To create feature columns, call functions from the
-`tf.feature_column` module. This document explains nine of the functions in
-that module. As the following figure shows, all nine functions return either a
-Categorical-Column or a Dense-Column object, except `bucketized_column`, which
-inherits from both classes:
+要创建特征列，请调用 tf.feature_column 模块的函数。本文档介绍了该模块中的九个函数。如下图所示，所有九个函数都会返回一个 `Categorical-Column` 或一个 `Dense-Column` 对象，但却不会返回 `bucketized_column`，后者继承自这两个类：
 
 <div style="width:80%; margin:auto; margin-bottom:10px; margin-top:20px;">
-<img style="width:100%" src="../images/feature_columns/some_constructors.jpg">
+<img style="width:100%" src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/feature_columns/some_constructors.jpg">
 </div>
 <div style="text-align: center">
-Feature column methods fall into two main categories and one hybrid category.
+特征列方法分为两个主要类别和一个混合类别。 
 </div>
 
-Let's look at these functions in more detail.
+我们来更详细地了解这些函数。
 
-### Numeric column
+### 数值列
 
-The Iris classifier calls the `tf.feature_column.numeric_column` function for
-all input features:
+鸢尾花分类器会针对所有输入特征调用 `tf.feature_column.numeric_column` 函数：
 
   * `SepalLength`
   * `SepalWidth`
   * `PetalLength`
   * `PetalWidth`
 
-Although `tf.numeric_column` provides optional arguments, calling
-`tf.numeric_column` without any arguments, as follows, is a fine way to specify
-a numerical value with the default data type (`tf.float32`) as input to your
-model:
+虽然 `tf.numeric_column` 提供可选参数，但也可以在没有任何参数的情况下调用 `tf.numeric_column`（如下所示），这是一种将具有默认数据类型 (`tf.float32`) 的数值指定为模型输入的不错方式：
 
 ```python
 # Defaults to a tf.float32 scalar.
 numeric_feature_column = tf.feature_column.numeric_column(key="SepalLength")
 ```
 
-To specify a non-default numerical data type, use the `dtype` argument. For
-example:
+要指定一个非默认的数值数据类型，请使用 `dtype` 参数。例如：
 
 ``` python
 # Represent a tf.float64 scalar.
@@ -102,8 +73,7 @@ numeric_feature_column = tf.feature_column.numeric_column(key="SepalLength",
                                                           dtype=tf.float64)
 ```
 
-By default, a numeric column creates a single value (scalar). Use the shape
-argument to specify another shape. For example:
+默认情况下，数值列会创建单个值（标量）。使用 `shape` 参数指定另一种形状。例如：
 
 <!--TODO(markdaoust) link to full example-->
 ```python
@@ -115,43 +85,29 @@ vector_feature_column = tf.feature_column.numeric_column(key="Bowling",
 matrix_feature_column = tf.feature_column.numeric_column(key="MyMatrix",
                                                          shape=[10,5])
 ```
-### Bucketized column
+### 分桶列
 
-Often, you don't want to feed a number directly into the model, but instead
-split its value into different categories based on numerical ranges.  To do so,
-create a `tf.feature_column.bucketized_column`. For
-example, consider raw data that represents the year a house was built. Instead
-of representing that year as a scalar numeric column, we could split the year
-into the following four buckets:
+通常，您不会直接向模型馈送数字，相反，您会根据数值范围将其值分为不同的类别。为此，请创建一个分桶列。以表示房屋建造年份的原始数据为例。我们并非以标量数值列表示年份，而是将年份分成下列四个分桶：
 
 <div style="width:80%; margin:auto; margin-bottom:10px; margin-top:20px;">
-<img style="width:100%" src="../images/feature_columns/bucketized_column.jpg">
+<img style="width:100%" src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/feature_columns/bucketized_column.jpg">
 </div>
 <div style="text-align: center">
-Dividing year data into four buckets.
+ 将年份数据分成四个分桶。 
 </div>
 
-The model will represent the buckets as follows:
+模型将按以下方式表示这些分桶：
 
-|Date Range |Represented as... |
+|日期范围 |表示为… |
 |:----------|:-----------------|
 |< 1960               | [1, 0, 0, 0] |
-|>= 1960 but < 1980   | [0, 1, 0, 0] |
-|>= 1980 but < 2000   | [0, 0, 1, 0] |
+|>= 1960 但 < 1980   | [0, 1, 0, 0] |
+|>= 1980 但 < 2000   | [0, 0, 1, 0] |
 |>= 2000              | [0, 0, 0, 1] |
 
-Why would you want to split a number—a perfectly valid input to your
-model—into a categorical value? Well, notice that the categorization splits a
-single input number into a four-element vector. Therefore, the model now can
-learn _four individual weights_ rather than just one; four weights creates a
-richer model than one weight. More importantly, bucketizing enables the model
-to clearly distinguish between different year categories since only one of the
-elements is set (1) and the other three elements are cleared (0). For example,
-when we just use a single number (a year) as input, a linear model can only
-learn a linear relationship. So, bucketing provides the model with additional
-flexibility that the model can use to learn.
+为什么要将数字（一个完全有效的模型输入）拆分为分类值？请注意，该分类将单个输入数字分成了一个四元素矢量。因此，模型现在可以学习四个单独的权重，而非仅仅一个；相比一个权重，四个权重能够创建一个内容更丰富的模型。更重要的是，借助分桶，模型能够清楚地区分不同年份类别，因为仅设置了一个元素 (1)，其他三个元素则被清除 (0)。例如，当我们仅将单个数字（年份）用作输入时，线性模型只能学习线性关系。因此，分桶为模型提供了可用于学习的额外灵活性。
 
-The following code demonstrates how to create a bucketized feature:
+以下代码演示了如何创建分桶特征：
 
 <!--TODO(markdaoust) link to full example - housing price grid?-->
 ```python
@@ -163,39 +119,27 @@ bucketized_feature_column = tf.feature_column.bucketized_column(
     source_column = numeric_feature_column,
     boundaries = [1960, 1980, 2000])
 ```
-Note that specifying a _three_-element boundaries vector creates a
-_four_-element bucketized vector.
+请注意，指定一个三元素边界矢量可创建一个四元素分桶矢量。
 
 
-### Categorical identity column
+### 分类标识列
 
-**Categorical identity columns** can be seen as a special case of bucketized
-columns. In traditional bucketized columns, each bucket represents a range of
-values (for example, from 1960 to 1979). In a categorical identity column, each
-bucket represents a single, unique integer. For example, let's say you want to
-represent the integer range `[0, 4)`.  That is, you want to represent the
-integers 0, 1, 2, or 3. In this case, the categorical identity mapping looks
-like this:
+可将分类标识列视为分桶列的一种特殊情况。在传统的分桶列中，每个分桶表示一系列值（例如，从 1960 年到 1979 年）。在分类标识列中，每个分桶表示一个唯一整数。例如，假设您想要表示整数范围 `[0, 4)`。也就是说，您想要表示整数 0、1、2 或 3。在这种情况下，分类标识映射如下所示：
 
 <div style="width:80%; margin:auto; margin-bottom:10px; margin-top:20px;">
-<img style="width:100%" src="../images/feature_columns/categorical_column_with_identity.jpg">
+<img style="width:100%" src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/feature_columns/categorical_column_with_identity.jpg">
 </div>
 <div style="text-align: center">
-A categorical identity column mapping. Note that this is a one-hot
-encoding, not a binary numerical encoding.
+分类标识列映射。请注意，这是一种独热编码，而非二元数值编码。 
 </div>
 
-As with bucketized columns, a model can learn a separate weight for each class
-in a categorical identity column. For example, instead of using a string to
-represent the `product_class`, let's represent each class with a unique integer
-value. That is:
+与分桶列一样，模型可以在分类标识列中学习每个类别各自的权重。例如，我们使用唯一的整数值来表示每个类别，而不是使用某个字符串来表示 `product_class`。即：
 
 * `0="kitchenware"`
 * `1="electronics"`
 * `2="sport"`
 
-Call `tf.feature_column.categorical_column_with_identity` to implement a
-categorical identity column. For example:
+调用 `tf.feature_column.categorical_column_with_identity` 以实现类别标识列。例如：
 
 ``` python
 # Create categorical output for an integer feature named "my_feature_b",
@@ -213,28 +157,23 @@ def input_fn():
             [Label_values])
 ```
 
-### Categorical vocabulary column
+### 分类词汇列
 
-We cannot input strings directly to a model. Instead, we must first map strings
-to numeric or categorical values. Categorical vocabulary columns provide a good
-way to represent strings as a one-hot vector. For example:
+我们不能直接向模型中输入字符串。相反，我们必须首先将字符串映射到数值或分类值。分类词汇列提供了一种将字符串表示为独热矢量的好方法。例如：
 
 <div style="width:80%; margin:auto; margin-bottom:10px; margin-top:20px;">
-<img style="width:100%" src="../images/feature_columns/categorical_column_with_vocabulary.jpg">
+<img style="width:100%" src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/feature_columns/categorical_column_with_vocabulary.jpg">
 </div>
 <div style="text-align: center">
-Mapping string values to vocabulary columns.
+将字符串值映射到词汇列。 
 </div>
 
-As you can see, categorical vocabulary columns are kind of an enum version of
-categorical identity columns. TensorFlow provides two different functions to
-create categorical vocabulary columns:
+我们可以看出，分类词汇列就像是分类标识列的枚举版本。TensorFlow 提供了两种不同的函数来创建分类词汇列：
 
 * `tf.feature_column.categorical_column_with_vocabulary_list`
 * `tf.feature_column.categorical_column_with_vocabulary_file`
 
-`categorical_column_with_vocabulary_list` maps each string to an integer based
-on an explicit vocabulary list. For example:
+`categorical_column_with_vocabulary_list` 根据明确的词汇表将每个字符串映射到一个整数。例如：
 
 ```python
 # Given input "feature_name_from_input_fn" which is a string,
@@ -246,11 +185,7 @@ vocabulary_feature_column =
         vocabulary_list=["kitchenware", "electronics", "sports"])
 ```
 
-The preceding function is pretty straightforward, but it has a significant
-drawback. Namely, there's way too much typing when the vocabulary list is long.
-For these cases, call
-`tf.feature_column.categorical_column_with_vocabulary_file` instead, which lets
-you place the vocabulary words in a separate file. For example:
+上面的函数非常简单，但它有一个明显的缺点。那就是，当词汇表很长时，需要输入的内容太多了。对于此类情况，请改为调用 `tf.feature_column.categorical_column_with_vocabulary_file`，以便将词汇放在单独的文件中。例如：
 
 ```python
 
@@ -264,8 +199,7 @@ vocabulary_feature_column =
         vocabulary_size=3)
 ```
 
-`product_class.txt` should contain one line for each vocabulary element. In our
-case:
+`product_class.txt` 中的每个词汇元素应各占一行。在我们的示例中：
 
 ```None
 kitchenware
@@ -273,26 +207,16 @@ electronics
 sports
 ```
 
-### Hashed Column
+### 经过哈希处理的列
 
-So far, we've worked with a naively small number of categories. For example,
-our product_class example has only 3 categories. Often though, the number of
-categories can be so big that it's not possible to have individual categories
-for each vocabulary word or integer because that would consume too much memory.
-For these cases, we can instead turn the question around and ask, "How many
-categories am I willing to have for my input?"  In fact, the
-`tf.feature_column.categorical_column_with_hash_bucket` function enables you
-to specify the number of categories. For this type of feature column the model
-calculates a hash value of the input, then puts it into one of
-the `hash_bucket_size` categories using the modulo operator, as in the following
-pseudocode:
+到目前为止，我们处理的示例都包含很少的类别。例如，我们的 `product_class` 示例只有 3 个类别。但是通常，类别的数量非常大，以至于无法为每个词汇或整数设置单独的类别，因为这会消耗太多内存。对于此类情况，我们可以反问自己：“我愿意为我的输入设置多少类别？”实际上，`tf.feature_column.categorical_column_with_hash_bucket` 函数使您能够指定类别的数量。对于这种类型的特征列，模型会计算输入的哈希值，然后使用模运算符将其置于其中一个 `hash_bucket_size` 类别中，如以下伪代码所示：
 
 ```python
 # pseudocode
 feature_id = hash(raw_feature) % hash_bucket_size
 ```
 
-The code to create the `feature_column` might look something like this:
+创建 `feature_column` 的代码可能如下所示：
 
 ``` python
 hashed_feature_column =
@@ -300,56 +224,33 @@ hashed_feature_column =
         key = "some_feature",
         hash_bucket_size = 100) # The number of categories
 ```
-At this point, you might rightfully think: "This is crazy!" After all, we are
-forcing the different input values to a smaller set of categories. This means
-that two probably unrelated inputs will be mapped to the same
-category, and consequently mean the same thing to the neural network. The
-following figure illustrates this dilemma, showing that kitchenware and sports
-both get assigned to category (hash bucket) 12:
+此时，您可能会认为：“这太疯狂了！”，这种想法很正常。毕竟，我们是将不同的输入值强制划分成更少数量的类别。这意味着，两个可能不相关的输入会被映射到同一个类别，这样一来，神经网络也会面临同样的结果。下图显示了这一困境，即厨具和运动用品都被分配到类别（哈希分桶）12：
 
 <div style="width:80%; margin:auto; margin-bottom:10px; margin-top:20px;">
-<img style="width:100%" src="../images/feature_columns/hashed_column.jpg">
+<img style="width:100%" src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/feature_columns/hashed_column.jpg">
 </div>
 <div style="text-align: center">
-Representing data with hash buckets.
+ 用哈希分桶表示数据。 
 </div>
 
-As with many counterintuitive phenomena in machine learning, it turns out that
-hashing often works well in practice. That's because hash categories provide
-the model with some separation. The model can use additional features to further
-separate kitchenware from sports.
+与机器学习中的很多反直觉现象一样，事实证明哈希技术经常非常有用。这是因为哈希类别为模型提供了一些分隔方式。模型可以使用其他特征进一步将厨具与运动用品分隔开来。
 
-### Crossed column
+### 组合列
 
-Combining features into a single feature, better known as
-[feature crosses](https://developers.google.com/machine-learning/glossary/#feature_cross),
-enables the model to learn separate weights for each combination of
-features.
+通过将多个特征组合为一个特征（称为特征组合），模型可学习每个特征组合的单独权重。
 
-More concretely, suppose we want our model to calculate real estate prices in
-Atlanta, GA. Real-estate prices within this city vary greatly depending on
-location. Representing latitude and longitude as separate features isn't very
-useful in identifying real-estate location dependencies; however, crossing
-latitude and longitude into a single feature can pinpoint locations. Suppose we
-represent Atlanta as a grid of 100x100 rectangular sections, identifying each
-of the 10,000 sections by a feature cross of latitude and longitude. This
-feature cross enables the model to train on pricing conditions related to each
-individual section, which is a much stronger signal than latitude and longitude
-alone.
+更具体地说，假设我们希望模型计算佐治亚州亚特兰大的房产价格。这个城市的房产价格在不同位置差异很大。在确定对房产位置的依赖性方面，将纬度和经度表示为单独的特征用处不大；但是，将纬度和经度组合为一个特征则可精确定位位置。假设我们将亚特兰大表示为一个 100x100 的矩形网格区块，按纬度和经度的特征组合标识全部 10000 个区块。借助这种特征组合，模型可以针对与各个区块相关的房价条件进行训练，这比单独的经纬度信号强得多。
 
-The following figure shows our plan, with the latitude & longitude values for
-the corners of the city in red text:
+下图展示了我们的计划（以红色文本显示城市各角落的纬度和经度值）：
 
 <div style="width:80%; margin:auto; margin-bottom:10px; margin-top:20px;">
-<img style="width:100%" src="../images/feature_columns/Atlanta.jpg">
+<img style="width:100%" src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/feature_columns/Atlanta.jpg">
 </div>
 <div style="text-align: center">
-Map of Atlanta. Imagine this map divided into 10,000 sections of
-equal size.
+ 亚特兰大地图。想象一下，这张地图被分成 10000 个大小相同的区块。
 </div>
 
-For the solution, we used a combination of the `bucketized_column` we looked at
-earlier, with the `tf.feature_column.crossed_column` function.
+为了解决此问题，我们同时使用了 `tf.feature_column.crossed_column` 函数及先前介绍的 `bucketized_column`。
 
 <!--TODO(markdaoust) link to full example-->
 
@@ -386,15 +287,12 @@ fc = [
 est = tf.estimator.LinearRegressor(fc, ...)
 ```
 
-You may create a feature cross from either of the following:
+您可以根据下列任意内容创建一个特征组合：
 
-* Feature names; that is, names from the `dict` returned from `input_fn`.
-* Any categorical column, except `categorical_column_with_hash_bucket`
-  (since `crossed_column` hashes the input).
+- 特征名称；也就是 `input_fn` 返回的 `dict` 中的名称。
+- 任意分类列，`categorical_column_with_hash_bucket` 除外（因为 `crossed_column` 会对输入进行哈希处理）。
 
-When the feature columns `latitude_bucket_fc` and `longitude_bucket_fc` are
-crossed, TensorFlow will create `(latitude_fc, longitude_fc)` pairs for each
-example. This would produce a full grid of possibilities as follows:
+当特征列 `latitude_bucket_fc` 和 `longitude_bucket_fc` 组合时，TensorFlow 会为每个样本创建 `(latitude_fc, longitude_fc)` 对。这会生成完整的概率网格，如下所示：
 
 ``` None
  (0,0),  (0,1)...  (0,99)
@@ -403,44 +301,26 @@ example. This would produce a full grid of possibilities as follows:
 (99,0), (99,1)...(99, 99)
 ```
 
-Except that a full grid would only be tractable for inputs with limited
-vocabularies. Instead of building this, potentially huge, table of inputs,
-the `crossed_column` only builds the number requested by the `hash_bucket_size`
-argument. The feature column assigns an example to a index by running a hash
-function on the tuple of inputs, followed by a modulo operation with
-`hash_bucket_size`.
+不同之处在于，完整的网格仅对词汇有限的输入而言可追踪。`crossed_column` 仅构建 `hash_bucket_size` 参数所请求的数字，而不是构建这个可能非常庞大的输入表。特征列通过在输入元组上运行哈希函数，然后使用 `hash_bucket_size` 进行模运算，为索引分配一个样本。
 
-As discussed earlier, performing the
-hash and modulo function limits the number of categories, but can cause category
-collisions; that is, multiple (latitude, longitude) feature crosses will end
-up in the same hash bucket. In practice though, performing feature crosses
-still adds significant value to the learning capability of your models.
+如前所述，执行哈希函数和模函数会限制类别的数量，但会导致类别冲突；也就是说，多个（纬度、经度）特征组合最终位于同一个哈希分桶中。但实际上，执行特征组合对于模型的学习能力仍具备重大价值。
 
-Somewhat counterintuitively, when creating feature crosses, you typically still
-should include the original (uncrossed) features in your model (as in the
-preceding code snippet). The independent latitude and longitude features help the
-model distinguish between examples where a hash collision has occurred in the
-crossed feature.
+有些反直觉的是，在创建特征组合时，通常仍应在模型中包含原始（未组合）特征（如前面的代码段中所示）。独立的纬度和经度特征有助于模型区分组合特征中发生哈希冲突的样本。
 
-## Indicator and embedding columns
+## 指标列和嵌入列
 
-Indicator columns and embedding columns never work on features directly, but
-instead take categorical columns as input.
+指标列和嵌入列从不直接处理特征，而是将分类列视为输入。
 
-When using an indicator column, we're telling TensorFlow to do exactly what
-we've seen in our categorical product_class example. That is, an
-**indicator column** treats each category as an element in a one-hot vector,
-where the matching category has value 1 and the rest have 0s:
+使用指标列时，我们指示 TensorFlow 完成我们在分类 `product_class` 样本中看到的确切操作。也就是说，指标列将每个类别视为独热矢量中的一个元素，其中匹配类别的值为 1，其余类别为 0：
 
 <div style="width:80%; margin:auto; margin-bottom:10px; margin-top:20px;">
-<img style="width:100%" src="../images/feature_columns/categorical_column_with_identity.jpg">
+<img style="width:100%" src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/feature_columns/categorical_column_with_identity.jpg">
 </div>
 <div style="text-align: center">
-Representing data in indicator columns.
+用指标列表示数据。
 </div>
 
-Here's how you create an indicator column by calling
-`tf.feature_column.indicator_column`:
+以下是通过调用 `tf.feature_column.indicator_column` 创建指标列的方法：
 
 ``` python
 categorical_column = ... # Create any type of categorical column.
@@ -449,80 +329,48 @@ categorical_column = ... # Create any type of categorical column.
 indicator_column = tf.feature_column.indicator_column(categorical_column)
 ```
 
-Now, suppose instead of having just three possible classes, we have a million.
-Or maybe a billion. For a number of reasons, as the number of categories grow
-large, it becomes infeasible to train a neural network using indicator columns.
+现在，假设我们有一百万个可能的类别，或者可能有十亿个，而不是只有三个。出于多种原因，随着类别数量的增加，使用指标列来训练神经网络变得不可行。
 
-We can use an embedding column to overcome this limitation. Instead of
-representing the data as a one-hot vector of many dimensions, an
-**embedding column** represents that data as a lower-dimensional, ordinary
-vector in which each cell can contain any number, not just 0 or 1. By
-permitting a richer palette of numbers for every cell, an embedding column
-contains far fewer cells than an indicator column.
+我们可以使用嵌入列来克服这一限制。嵌入列并非将数据表示为很多维度的独热矢量，而是将数据表示为低维度普通矢量，其中每个单元格可以包含任意数字，而不仅仅是 0 或 1。通过使每个单元格能够包含更丰富的数字，嵌入列包含的单元格数量远远少于指标列。
 
-Let's look at an example comparing indicator and embedding columns. Suppose our
-input examples consist of different words from a limited palette of only 81
-words. Further suppose that the data set provides the following input
-words in 4 separate examples:
+我们来看一个将指标列和嵌入列进行比较的示例。假设我们的输入样本包含多个不同的字词（取自仅有 81 个字词的有限词汇表）。我们进一步假设数据集在 4 个不同的样本中提供了下列输入字词：
 
 * `"dog"`
 * `"spoon"`
 * `"scissors"`
 * `"guitar"`
 
-In that case, the following figure illustrates the processing path for
-embedding columns or indicator columns.
+在这种情况下，下图说明了嵌入列或指标列的处理流程。
 
 <div style="width:80%; margin:auto; margin-bottom:10px; margin-top:20px;">
-<img style="width:100%" src="../images/feature_columns/embedding_vs_indicator.jpg">
+<img style="width:100%" src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/feature_columns/embedding_vs_indicator.jpg">
 </div>
 <div style="text-align: center">
-An embedding column stores categorical data in a lower-dimensional
-vector than an indicator column. (We just placed random numbers into the
-embedding vectors; training determines the actual numbers.)
+嵌入列将分类数据存储在低于指标列的低维度矢量中。（我们只是将随机数字放入嵌入矢量中；由训练决定实际数字。） 
 </div>
 
-When an example is processed, one of the `categorical_column_with...` functions
-maps the example string to a numerical categorical value. For example, a
-function maps "spoon" to `[32]`. (The 32 comes from our imagination—the actual
-values depend on the mapping function.) You may then represent these numerical
-categorical values in either of the following two ways:
+处理样本时，其中一个 `categorical_column_with...` 函数会将样本字符串映射到分类数值。例如，一个函数将“spoon”映射到 `[32]`。（32 是我们想象出来的，实际值取决于映射函数。）然后，您可以通过下列两种方式之一表示这些分类数值：
 
-* As an indicator column. A function converts each numeric categorical value
-  into an 81-element vector (because our palette consists of 81 words), placing
-  a 1 in the index of the categorical value (0, 32, 79, 80) and a 0 in all the
-  other positions.
+- 作为指标列。函数将每个分类数值转换为一个 81 元素的矢量（因为我们的词汇表由 81 个字词组成），将 1 置于分类值 (0, 32, 79, 80) 的索引处，将 0 置于所有其他位置。
 
-* As an embedding column. A function uses the numerical categorical values
-  `(0, 32, 79, 80)` as indices to a lookup table. Each slot in that lookup table
-  contains a 3-element vector.
+- 作为嵌入列。函数将分类数值 `(0, 32, 79, 80)` 用作对照表的索引。该对照表中的每个槽位都包含一个 3 元素矢量。
 
-How do the values in the embeddings vectors magically get assigned? Actually,
-the assignments happen during training. That is, the model learns the best way
-to map your input numeric categorical values to the embeddings vector value in
-order to solve your problem. Embedding columns increase your model's
-capabilities, since an embeddings vector learns new relationships between
-categories from the training data.
+嵌入矢量中的值如何神奇地得到分配？实际上，分配值在训练期间进行。也就是说，模型学习了将输入分类数值映射到嵌入矢量值以解决问题的最佳方法。嵌入列可以增强模型的功能，因为嵌入矢量从训练数据中学习了类别之间的新关系。
 
-Why is the embedding vector size 3 in our example? Well, the following "formula"
-provides a general rule of thumb about the number of embedding dimensions:
+为什么示例中的嵌入矢量大小为 3？下面的“公式”提供了关于嵌入维度数量的一般经验法则：
 
 ```python
 embedding_dimensions =  number_of_categories**0.25
 ```
 
-That is, the embedding vector dimension should be the 4th root of the number of
-categories. Since our vocabulary size in this example is 81, the recommended
-number of dimensions is 3:
+也就是说，嵌入矢量维数应该是类别数量的 4 次方根。由于本示例中的词汇量为 81，建议维数为 3：
 
 ``` python
 3 =  81**0.25
 ```
-Note that this is just a general guideline; you can set the number of embedding
-dimensions as you please.
+请注意，这只是一个一般规则；您可以根据需要设置嵌入维度的数量。
 
-Call `tf.feature_column.embedding_column` to create an `embedding_column` as
-suggested by the following snippet:
+调用 `tf.feature_column.embedding_column` 来创建一个 `embedding_column`，如以下代码段所示：
 
 ``` python
 categorical_column = ... # Create any categorical column
@@ -534,39 +382,29 @@ embedding_column = tf.feature_column.embedding_column(
     dimension=embedding_dimensions)
 ```
 
-[Embeddings](../guide/embedding.md) is a significant topic within machine
-learning. This information was just to get you started using them as feature
-columns.
+[嵌入](/docs/tensorflow/guide/embedding)是机器学习中的一个重要概念。这些信息仅仅是帮助您将其用作特征列的入门信息。
 
-## Passing feature columns to Estimators
+## 将特征列传递给 Estimator
 
-As the following list indicates, not all Estimators permit all types of
-`feature_columns` argument(s):
+如下面的列表所示，并非所有 Estimator 都支持所有类型的 `feature_columns` 参数：
 
-* `tf.estimator.LinearClassifier` and
-  `tf.estimator.LinearRegressor`: Accept all types of
-  feature column.
-* `tf.estimator.DNNClassifier` and
-  `tf.estimator.DNNRegressor`: Only accept dense columns. Other
-  column types must be wrapped in either an `indicator_column` or
-  `embedding_column`.
-* `tf.estimator.DNNLinearCombinedClassifier` and
+* `tf.estimator.LinearClassifier` 和
+  `tf.estimator.LinearRegressor`：接受所有类型的特征列。
+* `tf.estimator.DNNClassifier` 和
+  `tf.estimator.DNNRegressor`：只接受密集列。其他类型的列必须封装在 `indicator_column` 或 `embedding_column` 中。
+* `tf.estimator.DNNLinearCombinedClassifier` 和
   `tf.estimator.DNNLinearCombinedRegressor`:
-    * The `linear_feature_columns` argument accepts any feature column type.
-    * The `dnn_feature_columns` argument only accepts dense columns.
+    * `linear_feature_columns` 参数接受任何类型的特征列。
+    * `dnn_feature_columns` 参数只接受密集列。
 
-## Other Sources
+## 其他资料
 
-For more examples on feature columns, view the following:
+有关特征列的更多示例，请查看以下内容：
 
-* The [Low Level Introduction](../guide/low_level_intro.md#feature_columns) demonstrates how
-  experiment directly with `feature_columns` using TensorFlow's low level APIs.
-* The [Estimator wide and deep learning tutorial](https://github.com/tensorflow/models/tree/master/official/wide_deep)
-  solves a binary classification problem using `feature_columns` on a variety of
-  input data types.
+* [低阶 API 简介](/docs/tensorflow/guide/low_level_intro#feature_columns)展示了如何使用 TensorFlow 的低阶 API 直接尝试 `feature_columns`。
+* [Estimator 宽度与深度学习教程](https://github.com/tensorflow/models/tree/master/official/wide_deep)针对各种输入数据类型使用 `feature_columns` 解决了二元分类问题。
 
-To learn more about embeddings, see the following:
+要详细了解嵌入，请查看以下内容：
 
-* [Deep Learning, NLP, and representations](http://colah.github.io/posts/2014-07-NLP-RNNs-Representations/)
-  (Chris Olah's blog)
-* The TensorFlow [Embedding Projector](http://projector.tensorflow.org)
+* [深度学习、NLP 和表示法](http://colah.github.io/posts/2014-07-NLP-RNNs-Representations/)（Chris Olah 的博客）
+* TensorFlow [Embedding Projector](http://projector.tensorflow.org)
