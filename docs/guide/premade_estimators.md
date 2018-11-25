@@ -1,53 +1,41 @@
-# Premade Estimators
+#  预创建的 Estimator
 
-This document introduces the TensorFlow programming environment and shows you
-how to solve the Iris classification problem in TensorFlow.
+本文档介绍了 TensorFlow 编程环境，并向您展示了如何在 TensorFlow 中解决鸢尾花分类问题。
 
-## Prerequisites
+## 前提条件
 
-Prior to using the sample code in this document, you'll need to do the
-following:
+在使用本文档中的示例代码之前，您需要执行以下操作：
 
-* [Install TensorFlow](../install).
-* If you installed TensorFlow with virtualenv or Anaconda, activate your
-  TensorFlow environment.
-* Install or upgrade pandas by issuing the following command:
+* [安装 TensorFlow](/docs/tensorflow/install).
+* 如果您是使用 virtualenv 或 Anaconda 安装的 TensorFlow，请激活您的 TensorFlow 环境。
+* 通过执行以下命令来安装或升级 Pandas：
 
         pip install pandas
 
-## Getting the sample code
+## 获取示例代码
 
-Take the following steps to get the sample code we'll be going through:
+按照下列步骤获取我们将要使用的示例代码：
 
-1. Clone the TensorFlow Models repository from GitHub by entering the following
-   command:
+1. 通过输入以下命令从 GitHub 克隆 TensorFlow 模型代码库：
 
         git clone https://github.com/tensorflow/models
 
-1. Change directory within that branch to the location containing the examples
-   used in this document:
+1. 将此分支内的目录更改为包含本文档中所用示例的位置：
 
         cd models/samples/core/get_started/
 
-The program described in this document is
-[`premade_estimator.py`](https://github.com/tensorflow/models/blob/master/samples/core/get_started/premade_estimator.py).
-This program uses
-[`iris_data.py`](https://github.com/tensorflow/models/blob/master/samples/core/get_started/iris_data.py)
-to fetch its training data.
+本文档中介绍的程序是 [`premade_estimator.py`](https://github.com/tensorflow/models/blob/master/samples/core/get_started/premade_estimator.py)。此程序使用
+[`iris_data.py`](https://github.com/tensorflow/models/blob/master/samples/core/get_started/iris_data.py) 获取其训练数据。
 
-### Running the program
+### 运行程序
 
-You run TensorFlow programs as you would run any Python program. For example:
+您可以像运行任何 Python 程序一样运行 TensorFlow 程序。例如：
 
 ``` bsh
 python premade_estimator.py
 ```
 
-The program should output training logs followed by some predictions against
-the test set. For example, the first line in the following output shows that
-the model thinks there is a 99.6% chance that the first example in the test
-set is a Setosa. Since the test set expected Setosa, this appears to be
-a good prediction.
+该程序应该会输出训练日志，然后对测试集进行一些预测。例如，以下输出的第一行显示该模型认为测试集中的第一个样本是山鸢尾的可能性为 99.6％。由于测试集中的第一个样本确实是山鸢尾，因此该模型预测得还比较准确。
 
 ``` None
 ...
@@ -58,160 +46,117 @@ Prediction is "Versicolor" (99.8%), expected "Versicolor"
 Prediction is "Virginica" (97.9%), expected "Virginica"
 ```
 
-If the program generates errors instead of answers, ask yourself the following
-questions:
+如果程序生成错误（而不是答案），请思考下列问题：
 
-* Did you install TensorFlow properly?
-* Are you using the correct version of TensorFlow?
-* Did you activate the environment you installed TensorFlow in? (This is
-  only relevant in certain installation mechanisms.)
+* 您是否正确安装了 TensorFlow？
+* 您使用的 TensorFlow 版本是否正确？
+* 您是否激活了 TensorFlow 所在的安装环境？（此问题仅与某些安装机制有关。）
 
-## The programming stack
+## 编程堆栈
 
-Before getting into the details of the program itself, let's investigate the
-programming environment. As the following illustration shows, TensorFlow
-provides a programming stack consisting of multiple API layers:
+在详细了解程序本身之前，我们先来了解编程环境。如下图所示，TensorFlow 提供一个包含多个 API 层的编程堆栈：
 
 <div style="width:100%; margin:auto; margin-bottom:10px; margin-top:20px;">
-<img style="width:100%" src="../images/tensorflow_programming_environment.png">
+<img style="width:100%" src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/tensorflow_programming_environment.png">
 </div>
 
-We strongly recommend writing TensorFlow programs with the following APIs:
+我们强烈建议使用下列 API 编写 TensorFlow 程序：
 
-* [Estimators](../guide/estimators.md), which represent a complete model.
-  The Estimator API provides methods to train the model, to judge the model's
-  accuracy, and to generate predictions.
-* [Datasets for Estimators](../guide/datasets_for_estimators.md), which build a data input
-  pipeline. The Dataset API has methods to load and manipulate data, and feed
-  it into your model. The Dataset API meshes well with the Estimators API.
+* [Estimator](/docs/tensorflow/guide/estimators)：代表一个完整的模型。Estimator API 提供一些方法来训练模型、判断模型的准确率并生成预测。
+* [Estimator 数据集](/docs/tensorflow/guide/datasets_for_estimators)：构建数据输入管道。Dataset API 提供一些方法来加载和操作数据，并将数据馈送到模型中。Dataset API 与 Estimator API 合作无间。
 
-## Classifying irises: an overview
+## 对鸢尾花进行分类：概览
 
-The sample program in this document builds and tests a model that
-classifies Iris flowers into three different species based on the size of their
-[sepals](https://en.wikipedia.org/wiki/Sepal) and
-[petals](https://en.wikipedia.org/wiki/Petal).
+本文档中的示例程序构建并测试了一个模型，此模型根据鸢尾花的花萼（sepal）和花瓣（petal）大小将其分为三种不同的品种。
 
 <div style="width:80%; margin:auto; margin-bottom:10px; margin-top:20px;">
 <img style="width:100%"
   alt="Petal geometry compared for three iris species: Iris setosa, Iris virginica, and Iris versicolor"
-  src="../images/iris_three_species.jpg">
+  src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/iris_three_species.jpg">
 </div>
 
-**From left to right,
-[*Iris setosa*](https://commons.wikimedia.org/w/index.php?curid=170298) (by
-[Radomil](https://commons.wikimedia.org/wiki/User:Radomil), CC BY-SA 3.0),
-[*Iris versicolor*](https://commons.wikimedia.org/w/index.php?curid=248095) (by
-[Dlanglois](https://commons.wikimedia.org/wiki/User:Dlanglois), CC BY-SA 3.0),
-and [*Iris virginica*](https://www.flickr.com/photos/33397993@N05/3352169862)
-(by [Frank Mayfield](https://www.flickr.com/photos/33397993@N05), CC BY-SA
-2.0).**
+从左到右：山鸢尾（提供者：[Radomil](https://commons.wikimedia.org/wiki/User:Radomil)，依据 CC BY-SA 3.0 使用）、[*变色鸢尾*](https://commons.wikimedia.org/w/index.php?curid=248095)（提供者：[Dlanglois](https://commons.wikimedia.org/wiki/User:Dlanglois)，依据 CC BY-SA 3.0 使用）和[*维吉尼亚鸢尾*](https://www.flickr.com/photos/33397993@N05/3352169862)（提供者：[Frank Mayfield](https://www.flickr.com/photos/33397993@N05)，依据 CC BY-SA 2.0 使用）。
 
-### The data set
+### 数据集
 
-The Iris data set contains four features and one
-[label](https://developers.google.com/machine-learning/glossary/#label).
-The four features identify the following botanical characteristics of
-individual Iris flowers:
+鸢尾花数据集包含四个特征和一个标签。这四个特征确定了单株鸢尾花的下列植物学特征：
 
-* sepal length
-* sepal width
-* petal length
-* petal width
+- 花萼长度
+- 花萼宽度
+- 花瓣长度
+- 花瓣宽度
 
-Our model will represent these features as `float32` numerical data.
+我们的模型会将这些特征表示为 `float32` 数值数据。
 
-The label identifies the Iris species, which must be one of the following:
+该标签确定了鸢尾花品种，品种必须是下列任意一种：
 
-* Iris setosa (0)
-* Iris versicolor (1)
-* Iris virginica (2)
+- 山鸢尾 (0)
+- 变色鸢尾 (1)
+- 维吉尼亚鸢尾 (2)
 
-Our model will represent the label as `int32` categorical data.
+我们的模型会将该标签表示为 `int32` 分类数据。
 
-The following table shows three examples in the data set:
+下表显示了数据集中的三个样本：
 
-|sepal length | sepal width | petal length | petal width| species (label) |
+| 花萼长度 | 花萼宽度 | 花瓣长度 | 花瓣宽度 | 品种（标签） |
 |------------:|------------:|-------------:|-----------:|:---------------:|
-|         5.1 |         3.3 |          1.7 |        0.5 |   0 (Setosa)   |
-|         5.0 |         2.3 |          3.3 |        1.0 |   1 (versicolor)|
-|         6.4 |         2.8 |          5.6 |        2.2 |   2 (virginica) |
+|         5.1 |         3.3 |          1.7 |        0.5 |   0 (山鸢尾)   |
+|         5.0 |         2.3 |          3.3 |        1.0 |   1 (变色鸢尾)|
+|         6.4 |         2.8 |          5.6 |        2.2 |   2 (维吉尼亚鸢尾) |
 
-### The algorithm
+### 算法
 
-The program trains a Deep Neural Network classifier model having the following
-topology:
+该程序会训练一个具有以下拓扑结构的深度神经网络分类器模型：
 
-* 2 hidden layers.
-* Each hidden layer contains 10 nodes.
+- 2 个隐藏层。
+- 每个隐藏层包含 10 个节点。
 
-The following figure illustrates the features, hidden layers, and predictions
-(not all of the nodes in the hidden layers are shown):
+下图展示了特征、隐藏层和预测（并未显示隐藏层中的所有节点）：
 
 <div style="width:80%; margin:auto; margin-bottom:10px; margin-top:20px;">
 <img style="width:100%"
   alt="A diagram of the network architecture: Inputs, 2 hidden layers, and outputs"
-  src="../images/custom_estimators/full_network.png">
+  src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/custom_estimators/full_network.png">
 </div>
 
-### Inference
+### 推理
 
-Running the trained model on an unlabeled example yields three predictions,
-namely, the likelihood that this flower is the given Iris species. The sum of
-those output predictions will be 1.0. For example, the prediction on an
-unlabeled example might be something like the following:
+在无标签样本上运行经过训练的模型会产生三个预测，即相应鸢尾花属于指定品种的可能性。这些输出预测的总和是 1.0。例如，对无标签样本的预测可能如下所示：
 
-* 0.03 for Iris Setosa
-* 0.95 for Iris Versicolor
-* 0.02 for Iris Virginica
+- 0.03（山鸢尾）
+- 0.95（变色鸢尾）
+- 0.02（维吉尼亚鸢尾）
 
-The preceding prediction indicates a 95% probability that the given unlabeled
-example is an Iris Versicolor.
+上面的预测表示指定无标签样本是变色鸢尾的概率为 95％。
 
-## Overview of programming with Estimators
+## 采用 Estimator 进行编程的概览
 
-An Estimator is TensorFlow's high-level representation of a complete model. It
-handles the details of initialization, logging, saving and restoring, and many
-other features so you can concentrate on your model. For more details see
-[Estimators](../guide/estimators.md).
+Estimator 是 TensorFlow 对完整模型的高级表示。它会处理初始化、日志记录、保存和恢复等细节部分，并具有很多其他功能，以便您可以专注于模型。有关更多详情，请参阅
+[Estimator](/docs/tensorflow/guide/estimators)。
 
-An Estimator is any class derived from `tf.estimator.Estimator`. TensorFlow
-provides a collection of
-`tf.estimator`
-(for example, `LinearRegressor`) to implement common ML algorithms. Beyond
-those, you may write your own
-[custom Estimators](../guide/custom_estimators.md).
-We recommend using pre-made Estimators when just getting started.
+Estimator 是从 tf.estimator.Estimator 衍生而来的任何类。TensorFlow 提供一组预创建的 Estimator（例如 `LinearRegressor`）来实现常见的机器学习算法。除此之外，您可以编写自定义 Estimator。我们建议在刚开始使用 TensorFlow 时使用预创建的 Estimator。
 
-To write a TensorFlow program based on pre-made Estimators, you must perform the
-following tasks:
+要根据预创建的 Estimator 编写 TensorFlow 程序，您必须执行下列任务：
 
-* Create one or more input functions.
-* Define the model's feature columns.
-* Instantiate an Estimator, specifying the feature columns and various
-  hyperparameters.
-* Call one or more methods on the Estimator object, passing the appropriate
-  input function as the source of the data.
+- 创建一个或多个输入函数。
+- 定义模型的特征列。
+- 实例化 Estimator，指定特征列和各种超参数。
+- 在 Estimator 对象上调用一个或多个方法，传递适当的输入函数作为数据的来源。
 
-Let's see how those tasks are implemented for Iris classification.
+我们来看看如何针对鸢尾花分类实施这些任务。
 
-## Create input functions
+## 创建输入函数
 
-You must create input functions to supply data for training,
-evaluating, and prediction.
+您必须创建输入函数来提供用于训练、评估和预测的数据。
 
-An **input function** is a function that returns a `tf.data.Dataset` object
-which outputs the following two-element tuple:
+输入函数是返回 `tf.data.Dataset` 对象的函数，此对象会输出下列含有两个元素的元组：
 
-* [`features`](https://developers.google.com/machine-learning/glossary/#feature) - A Python dictionary in which:
-    * Each key is the name of a feature.
-    * Each value is an array containing all of that feature's values.
-* `label` - An array containing the values of the
-  [label](https://developers.google.com/machine-learning/glossary/#label) for
-  every example.
+- `features` - Python 字典，其中：
+    - 每个键都是特征的名称。
+    - 每个值都是包含此特征所有值的数组。
+- `label` - 包含每个样本的标签值的数组。
 
-Just to demonstrate the format of the input function, here's a simple
-implementation:
+为了向您展示输入函数的格式，请查看下面这个简单的实现：
 
 ```python
 def input_evaluation_set():
@@ -223,37 +168,28 @@ def input_evaluation_set():
     return features, labels
 ```
 
-Your input function may generate the `features` dictionary and `label` list any
-way you like. However, we recommend using TensorFlow's Dataset API, which can
-parse all sorts of data. At a high level, the Dataset API consists of the
-following classes:
+输入函数可以以您需要的任何方式生成 `features` 字典和 `label` 列表。不过，我们建议使用 TensorFlow 的 `Dataset` API，它可以解析各种数据。概括来讲，`Dataset` API 包含下列类：
 
 <div style="width:80%; margin:auto; margin-bottom:10px; margin-top:20px;">
 <img style="width:100%"
   alt="A diagram showing subclasses of the Dataset class"
-  src="../images/dataset_classes.png">
+  src="https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/dataset_classes.png">
 </div>
 
-Where the individual members are:
+各个类如下所示：
 
-* `Dataset` - Base class containing methods to create and transform
-  datasets. Also allows you to initialize a dataset from data in memory, or from
-  a Python generator.
-* `TextLineDataset` - Reads lines from text files.
-* `TFRecordDataset` - Reads records from TFRecord files.
-* `FixedLengthRecordDataset` - Reads fixed size records from binary files.
-* `Iterator` - Provides a way to access one data set element at a time.
+* `Dataset` - 包含创建和转换数据集的方法的基类。您还可以通过该类从内存中的数据或 Python 生成器初始化数据集。
+* `TextLineDataset`- 从文本文件中读取行。
+* `TFRecordDataset` - 从 TFRecord 文件中读取记录。
+* `FixedLengthRecordDataset` - 从二进制文件中读取具有固定大小的记录。
+* `Iterator` - 提供一次访问一个数据集元素的方法。
 
-The Dataset API can handle a lot of common cases for you. For example,
-using the Dataset API, you can easily read in records from a large collection
-of files in parallel and join them into a single stream.
+Dataset API 可以为您处理很多常见情况。例如，使用 Dataset API，您可以轻松地从大量并行文件中读取记录，并将它们合并为单个数据流。
 
-To keep things simple in this example we are going to load the data with
-[pandas](https://pandas.pydata.org/), and build our input pipeline from this
-in-memory data.
+为了简化此示例，我们将使用
+[pandas](https://pandas.pydata.org/)加载数据，并利用此内存中的数据构建输入管道。
 
-Here is the input function used for training in this program, which is available
-in [`iris_data.py`](https://github.com/tensorflow/models/blob/master/samples/core/get_started/iris_data.py):
+以下是用于在此程序中进行训练的输入函数（位于 [`iris_data.py`](https://github.com/tensorflow/models/blob/master/samples/core/get_started/iris_data.py) 中）：
 
 ``` python
 def train_input_fn(features, labels, batch_size):
@@ -265,19 +201,11 @@ def train_input_fn(features, labels, batch_size):
     return dataset.shuffle(1000).repeat().batch(batch_size)
 ```
 
-## Define the feature columns
+## 定义特征列
 
-A [**feature column**](https://developers.google.com/machine-learning/glossary/#feature_columns)
-is an object describing how the model should use raw input data from the
-features dictionary. When you build an Estimator model, you pass it a list of
-feature columns that describes each of the features you want the model to use.
-The `tf.feature_column` module provides many options for representing data
-to the model.
+特征列是一个对象，用于说明模型应该如何使用特征字典中的原始输入数据。在构建 Estimator 模型时，您会向其传递一个特征列的列表，其中包含您希望模型使用的每个特征。`tf.feature_column` 模块提供很多用于在模型中表示数据的选项。
 
-For Iris, the 4 raw features are numeric values, so we'll build a list of
-feature columns to tell the Estimator model to represent each of the four
-features as 32-bit floating-point values. Therefore, the code to create the
-feature column is:
+对于鸢尾花问题，4 个原始特征是数值，因此我们会构建一个特征列的列表，以告知 Estimator 模型将这 4 个特征都表示为 32 位浮点值。因此，创建特征列的代码如下所示：
 
 ```python
 # Feature columns describe how to use the input.
@@ -286,26 +214,20 @@ for key in train_x.keys():
     my_feature_columns.append(tf.feature_column.numeric_column(key=key))
 ```
 
-Feature columns can be far more sophisticated than those we're showing here.  We
-detail feature columns [later on](../guide/feature_columns.md) in our Getting
-Started guide.
+特征列可能比上述示例复杂得多。我们将在入门指南的[后面部分](/docs/tensorflow/guide/feature_columns)详细介绍特征列。
 
-Now that we have the description of how we want the model to represent the raw
-features, we can build the estimator.
+我们已经介绍了希望模型如何表示原始特征，现在可以构建 Estimator 了。
 
 
-## Instantiate an estimator
+## 实例化 Estimator
 
-The Iris problem is a classic classification problem. Fortunately, TensorFlow
-provides several pre-made classifier Estimators, including:
+鸢尾花问题是一个经典的分类问题。幸运的是，TensorFlow 提供了几个预创建的分类器 Estimator，其中包括：
 
-* `tf.estimator.DNNClassifier` for deep models that perform multi-class
-  classification.
-* `tf.estimator.DNNLinearCombinedClassifier` for wide & deep models.
-* `tf.estimator.LinearClassifier` for classifiers based on linear models.
+* `tf.estimator.DNNClassifier`：适用于执行多类别分类的深度模型。
+* `tf.estimator.DNNLinearCombinedClassifier`：适用于宽度和深度模型。
+* `tf.estimator.LinearClassifier`：适用于基于线性模型的分类器。
 
-For the Iris problem, `tf.estimator.DNNClassifier` seems like the best choice.
-Here's how we instantiated this Estimator:
+对于鸢尾花问题，`tf.estimator.DNNClassifier` 似乎是最好的选择。我们将如下所示地实例化此 Estimator：
 
 ```python
 # Build a DNN with 2 hidden layers and 10 nodes in each hidden layer.
@@ -317,17 +239,18 @@ classifier = tf.estimator.DNNClassifier(
     n_classes=3)
 ```
 
-## Train, Evaluate, and Predict
+## 训练、评估和预测
 
-Now that we have an Estimator object, we can call methods to do the following:
+我们已经有一个 Estimator 对象，现在可以调用方法来执行下列操作：
 
-* Train the model.
-* Evaluate the trained model.
-* Use the trained model to make predictions.
+- 训练模型。
+- 评估经过训练的模型。
+- 使用经过训练的模型进行预测。
 
-### Train the model
 
-Train the model by calling the Estimator's `train` method as follows:
+### 训练模型
+
+通过调用 Estimator 的 train 方法训练模型，如下所示：
 
 ```python
 # Train the Model.
@@ -336,17 +259,12 @@ classifier.train(
     steps=args.train_steps)
 ```
 
-Here we wrap up our `input_fn` call in a
-[`lambda`](https://docs.python.org/3/tutorial/controlflow.html)
-to capture the arguments while providing an input function that takes no
-arguments, as expected by the Estimator. The `steps` argument tells the method
-to stop training after a number of training steps.
+我们将 input_fn 调用封装在 [`lambda`](https://docs.python.org/3/tutorial/controlflow.html)
+中以获取参数，同时提供一个不采用任何参数的输入函数，正如 Estimator 预计的那样。`steps` 参数告知方法在训练多步后停止训练。
 
-### Evaluate the trained model
+### 评估经过训练的模型
 
-Now that the model has been trained, we can get some statistics on its
-performance. The following code block evaluates the accuracy of the trained
-model on the test data:
+模型已经过训练，现在我们可以获取一些关于其效果的统计信息。以下代码块会评估经过训练的模型对测试数据进行预测的准确率：
 
 ```python
 # Evaluate the model.
@@ -356,24 +274,20 @@ eval_result = classifier.evaluate(
 print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
 ```
 
-Unlike our call to the `train` method, we did not pass the `steps`
-argument to evaluate. Our `eval_input_fn` only yields a single
-[epoch](https://developers.google.com/machine-learning/glossary/#epoch) of data.
+与我们对 `train` 方法的调用不同，我们没有传递 `steps` 参数来进行评估。我们的 `eval_input_fn` 只生成一个周期的数据。
 
-Running this code yields the following output (or something similar):
+运行此代码会生成以下输出（或类似输出）：
 
 ```none
 Test set accuracy: 0.967
 ```
-
+<!--
 The `eval_result` dictionary also contains the `average_loss` (mean loss per sample), the `loss` (mean loss per mini-batch) and the value of the estimator's `global_step` (the number of training iterations it underwent).
+-->
 
-### Making predictions (inferring) from the trained model
+### 利用经过训练的模型进行预测（推理）
 
-We now have a trained model that produces good evaluation results.
-We can now use the trained model to predict the species of an Iris flower
-based on some unlabeled measurements. As with training and evaluation, we make
-predictions using a single function call:
+我们已经有一个经过训练的模型，可以生成准确的评估结果。我们现在可以使用经过训练的模型，根据一些无标签测量结果预测鸢尾花的品种。与训练和评估一样，我们使用单个函数调用进行预测：
 
 ```python
 # Generate predictions from the model
@@ -390,9 +304,7 @@ predictions = classifier.predict(
                                             batch_size=args.batch_size))
 ```
 
-The `predict` method returns a Python iterable, yielding a dictionary of
-prediction results for each example. The following code prints a few
-predictions and their probabilities:
+`predict` 方法返回一个 Python 可迭代对象，为每个样本生成一个预测结果字典。以下代码输出了一些预测及其概率：
 
 
 ``` python
@@ -406,7 +318,7 @@ for pred_dict, expec in zip(predictions, expected):
                           100 * probability, expec))
 ```
 
-Running the preceding code yields the following output:
+运行上面的代码会生成以下输出：
 
 ``` None
 ...
@@ -418,15 +330,12 @@ Prediction is "Virginica" (97.9%), expected "Virginica"
 ```
 
 
-## Summary
+## 总结
 
-Pre-made Estimators are an effective way to quickly create standard models.
+使用预创建的 Estimator 可以快速高效地创建标准模型。
 
-Now that you've gotten started writing TensorFlow programs, consider the
-following material:
+您已经开始编写 TensorFlow 程序，现在请查看以下资料：
 
-* [Checkpoints](../guide/checkpoints.md) to learn how to save and restore models.
-* [Datasets for Estimators](../guide/datasets_for_estimators.md) to learn more about importing
-  data into your model.
-* [Creating Custom Estimators](../guide/custom_estimators.md) to learn how to
-  write your own Estimator, customized for a particular problem.
+* [检查点](/docs/tensorflow/guide/checkpoints)：了解如何保存和恢复模型。
+* [Estimator 的数据集](/docs/tensorflow/guide/datasets_for_estimators)：详细了解如何将数据导入模型中。
+* [创建自定义 Estimator](/docs/tensorflow/guide/custom_estimators)：了解如何编写针对特定问题进行自定义的 Estimator。
