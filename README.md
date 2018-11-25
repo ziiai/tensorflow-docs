@@ -16,7 +16,7 @@ TensorFlow 相关文章：[https://www.ziiai.com/topic/332](https://www.ziiai.co
 [https://tensorflow.org/](https://tensorflow.org/)
 
 官方GitHub仓库：
-[https://github.com/tensorflow/docs](https://github.com/tensorflow/tensorflow)
+[https://github.com/tensorflow/docs](https://github.com/tensorflow/docs)
 
 中文版地址：
 [https://www.ziiai.com/docs/tensorflow](https://www.ziiai.com/docs/tensorflow)
