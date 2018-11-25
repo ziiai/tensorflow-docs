@@ -104,6 +104,6 @@ for i in range(200): step.run()
 DisplayFractal(ns.eval())
 ```
 
-![jpeg](https://www.tensorflow.org/images/mandelbrot_output.jpg)
+![jpeg](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/mandelbrot_output.jpg)
 
 还行！

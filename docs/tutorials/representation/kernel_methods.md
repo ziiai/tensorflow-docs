@@ -1,6 +1,6 @@
 # 使用显式核方法改进线性模型
 
-> 注意：本文档使用的是已弃用的 `tf.estimator` 版本，该版本具有不同的接口。此外，它还使用了其他 `contrib` 方法，这些方法的 [API 可能不稳定](../../guide/version_compat.md#not_covered)。
+> 注意：本文档使用的是已弃用的 `tf.estimator` 版本，该版本具有不同的接口。此外，它还使用了其他 `contrib` 方法，这些方法的 [API 可能不稳定](/docs/tensorflow/guide/version_compat#not_covered)。
 
 在本教程中，我们演示了结合使用（显式）核方法与线性模型可以如何大幅提高线性模型的预测质量，并且不会显著增加训练和推理时间。与双核方法不同，就训练/推理时间和内存要求而言，显式（原始）核方法能够根据训练数据集的大小灵活调整。
 
@@ -11,7 +11,7 @@
 
 目前，TensorFlow 仅支持密集特征的显式核映射；TensorFlow 将在后续版本中提供对稀疏特征的支持。
 
-本教程使用 `tf.contrib.learn`（TensorFlow 的高阶机器学习 API）Estimator 构建我们的机器学习模型。如果您不熟悉此 API，不妨通过 [Estimator guide](../../guide/estimators.md)
+本教程使用 `tf.contrib.learn`（TensorFlow 的高阶机器学习 API）Estimator 构建我们的机器学习模型。如果您不熟悉此 API，不妨通过 [Estimator guide](/docs/tensorflow/guide/estimators)
 着手了解。我们将使用 MNIST 数据集。本教程包含以下步骤：
 
 - 加载和准备 MNIST 数据，以用于分类。
@@ -28,7 +28,7 @@ data = tf.contrib.learn.datasets.mnist.load_mnist()
 上述方法会加载整个 MNIST 数据集（包含 7 万个样本），然后将数据集拆分为训练数据（5.5 万）、验证数据（5 千）和测试数据（1 万）。拆分的每个数据集均包含一个图像 NumPy 数组（形状为 [sample_size, 784]）以及一个标签 NumPy 数组（形状为 [sample_size, 1]）。在本教程中，我们仅分别使用训练数据和验证数据训练和评估模型。
 
 要将数据馈送到 `tf.contrib.learn Estimator`，将数据转换为张量会很有帮助。为此，我们将使用 `input function` 将操作添加到 TensorFlow 图，该图在执行时会创建要在下游使用的小批次张量。有关输入函数的更多背景知识，请参阅
-[this section on input functions](../../guide/premade_estimators.md#create_input_functions).
+[this section on input functions](/docs/tensorflow/guide/premade_estimators#create_input_functions).
 这一部分。在本示例中，我们不仅会将 NumPy 数组转换为张量，还将使用 `tf.train.shuffle_batch` 操作指定 batch_size 以及是否在每次执行 input_fn 操作时都对输入进行随机化处理（在训练期间，随机化处理通常会加快收敛速度）。以下代码段是加载和准备数据的完整代码。在本示例中，我们使用大小为 256 的小批次数据集进行训练，并使用整个样本（5 千个条目）进行评估。您可以随意尝试不同的批次大小。
 
 ```python

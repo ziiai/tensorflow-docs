@@ -288,12 +288,12 @@ the advanced features of TensorFlow, see the implementation in
 我们的 vanilla 实现展示了 TensorFlow 的灵活性。例如，更改训练目标很简单，直接将对 `tf.nn.nce_loss()` 的调用替换成 `tf.nn.sampled_softmax_loss()` 等现成备用方案即可。如果您对损失函数有新的想法，可以在 TensorFlow 中为新目标手动编写表达式，并让优化器计算其导数。这种灵活性在机器学习模型开发的探索阶段非常宝贵，在这一阶段，我们会尝试几种不同的想法并快速迭代。
 
 在您对模型结构感到满意后，可能有必要优化您的实现，以提高运行效率，并在更短的时间内涵盖更多数据。例如，我们在本教程中使用的简单代码在速度上会受限，因为我们使用 Python 读取和馈送数据项（在 TensorFlow 后端上，每项操作需要进行的工作都非常少）。如果您发现模型在输入数据方面存在严重瓶颈，您可能需要针对您的问题实现自定义数据读取器，如
-[新数据格式](../../extend/new_data_formats.md)
+[新数据格式](/docs/tensorflow/extend/new_data_formats)
 中所述。至于 Skip-Gram 建模，我们实际上已经在
 [models/tutorials/embedding/word2vec.py](https://github.com/tensorflow/models/tree/master/tutorials/embedding/word2vec.py) 中提供示例。
 
 如果您的模型不再受 I/O 限制，但您仍希望提高性能，则可以通过编写自己的 TensorFlow 操作（如
-[添加新操作](../../extend/adding_an_op.md)
+[添加新操作](/docs/tensorflow/extend/adding_an_op)
 中所述）进一步采取措施。同样，我们已在
 [models/tutorials/embedding/word2vec_optimized.py](https://github.com/tensorflow/models/tree/master/tutorials/embedding/word2vec_optimized.py)
 中提供 Skip-Gram 示例。欢迎对它们相互进行基准测试，以衡量它们在各个阶段的性能改善情况。

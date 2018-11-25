@@ -130,6 +130,6 @@ for i in range(1000):
   DisplayArray(U.eval(), rng=[-0.1, 0.1])
 ```
 
-![jpeg](../../images/pde_output_2.jpg)
+![jpeg](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/pde_output_2.jpg)
 
 快看！有涟漪！

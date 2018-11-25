@@ -12,7 +12,7 @@
 ，并放手一试。这篇概述文章使用了此教程中的代码示例，但此教程更详细地介绍了代码。
 
 对基本的机器学习概念以及
-[Estimators](../../guide/premade_estimators.md)
+[Estimators](/docs/tensorflow/guide/premade_estimators)
 有一定了解将有助于理解这篇概述文章。
 
 
@@ -118,7 +118,7 @@ age_buckets = tf.feature_column.bucketized_column(
 FeatureColumn 为模型提供输入数据规范，指示如何表示和转换数据。但它们本身不提供数据。您需要通过输入函数提供数据。
 
 输入函数必须返回一个张量字典。每个键对应一个 `FeatureColumn` 的名称。每个键的值都是一个张量，其中包含该特征针对所有数据实例的值。请参阅
-[预创建的 Estimator](../../guide/premade_estimators.md#input_fn)，详细了解输入函数；另请参阅
+[预创建的 Estimator](/docs/tensorflow/guide/premade_estimators#input_fn)，详细了解输入函数；另请参阅
 [宽度学习和深度学习教程](https://github.com/tensorflow/models/tree/master/official/wide_deep)
 中的 `input_fn`，查看输入函数的示例实现。
 

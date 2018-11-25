@@ -154,7 +154,7 @@ Embedding Projector 提供三种方法来降低数据集的维度。
 </tr>
 </table>
 
-点击[此链接](https://www.tensorflow.org/images/embedding-mnist.mp4)可查看 Embedding Projector 中的一个有趣缩略图示例。
+点击[此链接](https://raw.githubusercontent.com/ziiai/tensorflow-docs/master/images/embedding-mnist.mp4)可查看 Embedding Projector 中的一个有趣缩略图示例。
 
 
 ## 迷你版常见问题解答

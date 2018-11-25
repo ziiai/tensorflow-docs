@@ -106,7 +106,7 @@ curl -L "https://storage.googleapis.com/download.tensorflow.org/models/inception
 
 Next, we need to compile the C++ binary that includes the code to load and run the graph.
 If you've followed
-[the instructions to download the source installation of TensorFlow](../../install/source.md)
+[the instructions to download the source installation of TensorFlow](/docs/tensorflow/install/source)
 for your platform, you should be able to build the example by
 running this command from your shell terminal:
 
@@ -448,8 +448,8 @@ and Michael Nielsen's book has a
 covering them.
 
 To find out more about implementing convolutional neural networks, you can jump
-to the TensorFlow [deep convolutional networks tutorial](../../tutorials/images/deep_cnn.md),
-or start a bit more gently with our [Estimator MNIST tutorial](../estimators/cnn.md).
+to the TensorFlow [deep convolutional networks tutorial](/docs/tensorflow/tutorials/images/deep_cnn),
+or start a bit more gently with our [Estimator MNIST tutorial](../estimators/cnn).
 Finally, if you want to get up to speed on research in this area, you can
 read the recent work of all the papers referenced in this tutorial.
 
