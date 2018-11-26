@@ -1,22 +1,21 @@
-# Install TensorFlow for C
+# 安装 C 语言版本的 TensorFlow
 
-TensorFlow provides a C API that can be used to build
-[bindings for other languages](/docs/tensorflow/extend/language_bindings). The API is defined in
-<a href="https://github.com/tensorflow/tensorflow/blob/master/tensorflow/c/c_api.h">`c_api.h`</a>
-and designed for simplicity and uniformity rather than convenience.
+TensorFlow 提供了一个 C 语言的 API 来
+[绑定其他语言](/docs/tensorflow/extend/language_bindings)。这个 API 定义在
+<a href="https://github.com/tensorflow/tensorflow/blob/master/tensorflow/c/c_api.h">`c_api.h`</a>里，是秉着简单性和一致性设计的，而非便利性。
 
 
-## Supported Platforms
+## 支持的平台
 
-TensorFlow for C is supported on the following systems:
+TensorFlow C 语言版本支持以下系统：
 
 * Linux, 64-bit, x86
-* macOS X, Version 10.12.6 (Sierra) or higher
+* macOS X, 10.12.6 (Sierra) 或更高版本
 
 
-## Setup
+## 设置
 
-### Download
+### 下载
 
 <table>
   <tr><th>TensorFlow C library</th><th>URL</th></tr>
@@ -36,22 +35,19 @@ TensorFlow for C is supported on the following systems:
   </tr>
 </table>
 
-### Extract
+### 解压
 
-Extract the downloaded TensorFlow C library to `/usr/local/lib` (or use a
-different directory, if preferred):
+将下载好的 C 扩张库解压到 `/usr/local/lib` （或者其他你自己喜欢的地方）：
 
     sudo tar -xz <var>libtensorflow.tar.gz</var> -C /usr/local
 
 ### Linker
 
-If you extract the TensorFlow C library to a system directory, such as
-`/usr/local`, configure the linker with `ldconfig`:
+如果你解压在系统文件夹，比如 `/usr/local`，需要用 `ldconfig`配置链接：
 
     sudo ldconfig
 
-Or, if you extract the TensorFlow C library to a non-system directory, such as
-`~/mydir`, then configure the linker environmental variables:
+如果不是的话，比如 `~/mydir`，那你就要配置到环境变量中。
 
 ### Linux
 
@@ -64,12 +60,11 @@ Or, if you extract the TensorFlow C library to a non-system directory, such as
     export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:~/mydir/lib
 
 
-## Build
+## 创建
 
-### Example program
+### 示例程序
 
-With the TensorFlow C library installed, create an example program with the
-following source code (`hello_tf.c`):
+安装好之后，创建一个示例程序（`hello_tf.c`）：
 
 ```c
 #include <stdio.h>
@@ -81,27 +76,23 @@ int main() {
 }
 ```
 
-### Compile
+### 编译
 
-Compile the example program to create an executable, then run:
+将以上程序编译成可执行文件，执行：
 
-    gcc hello_tf.c -o hello_tf</code>
+    gcc hello_tf.c -o hello_tf
 
-    ./hello_tf</code>
+    ./hello_tf
 
-The command outputs: `Hello from TensorFlow C library version <number>`
+执行后会输出： `Hello from TensorFlow C library version <number>`
 
-Success: The TensorFlow C library is configured.
+> 配置成功！
 
-If the program doesn't build, make sure that `gcc` can access the TensorFlow C
-library. If extracted to `/usr/local`, explictly pass the library location to
-the compiler:
+如果配置失败，请确保`gcc` 可以访问到 TensorFlow C 扩展库。如果解压到了 `/usr/local`，那么要指定库的位置：
 
     gcc -I/usr/local/include -L/usr/local/lib hello_tf.c -ltensorflow -o hello_tf
 
 
-## Build from source
+## 源码安装
 
-TensorFlow is open source. Read
-[the instructions](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/lib_package/README){:.external}
-to build TensorFlow's C library from source code.
+TensorFlow 是开源的，请参考[此说明](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/lib_package/README)进行源码安装。
