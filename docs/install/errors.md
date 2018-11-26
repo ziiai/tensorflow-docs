@@ -1,13 +1,10 @@
-# Build and install error messages
+# 编译和安装问题汇总
 
-TensorFlow uses [GitHub issues](https://github.com/tensorflow/tensorflow/issues)
-and [Stack Overflow](https://stackoverflow.com/questions/tagged/tensorflow)
-to track and document build and installation problems.
+TensorFlow 使用 [GitHub issues](https://github.com/tensorflow/tensorflow/issues)
+和 [Stack Overflow](https://stackoverflow.com/questions/tagged/tensorflow)
+追踪和记录用户在使用中遇到的问题。
 
-The following list links error messages to a solution or discussion. If you find
-an installation or build problem that is not listed, please search the GitHub
-issues and Stack Overflow. If you still can't find the error message, ask a new
-question on Stack Overflow with the `tensorflow` tag.
+以下是问题信息的解决方案或者相关讨论。如果问题还没解决你可以去以上平台搜索，如果还没有的话你就直接提问吧。
 
 <table>
 <tr><th>GitHub issue or Stack Overflow</th> <th>Error Message</th></tr>
