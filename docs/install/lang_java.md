@@ -1,32 +1,26 @@
-# Install TensorFlow for Java
+# 安装 Java 语言的 TensorFlow
 
-TensorFlow provides a
-[Java API](https://www.tensorflow.org/api_docs/java/reference/org/tensorflow/package-summary)—
-particularly useful for loading models created with Python and running them
-within a Java application.
+TensorFlow 可提供在 Java 程序中使用的 API。这些 API 特别适合用于加载以 Python 语言创建的模型并在 Java 应用中运行这些模型。本指南将介绍如何安装
+[Java API](https://www.tensorflow.org/api_docs/java/reference/org/tensorflow/package-summary)
+并在 Java 应用中使用 TensorFlow。
 
-Caution: The TensorFlow Java API is *not* covered by the TensorFlow
-[API stability guarantees](/docs/tensorflow/guide/version_compat).
+警告：TensorFlow Go API 不在 TensorFlow [API 稳定性保障](/docs/tensorflow/guide/version_compat)的涵盖范围内。
 
 
-## Supported Platforms
+## 支持的平台
 
-TensorFlow for Java is supported on the following systems:
+本指南介绍如何安装适用于 Java 的 TensorFlow。虽然这些说明可能也适用于其他配置，但我们只在满足以下要求的计算机上验证过这些说明（而且我们只支持在此类计算机上按这些说明操作）：
 
-* Ubuntu 16.04 or higher; 64-bit, x86
-* macOS 10.12.6 (Sierra) or higher
-* Windows 7 or higher; 64-bit, x86
+* Ubuntu 16.04 或更高版本； 64-bit, x86
+* macOS 10.12.6 (Sierra) 或更高版本
+* Windows 7 or higher;或更高版本； 64-bit, x86
 
-To install TensorFlow on Android, see
-[Android TensorFlow support](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/android)
-and the
-[TensorFlow Android Camera Demo](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/examples/android).
+针对 Android 的安装说明位于单独的 [Android TensorFlow 支持](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/android)页面中。安装完成后，请查看这个适用于 Android 的[完整 TensorFlow 示例](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/examples/android)。
 
 
-## TensorFlow with Apache Maven
+## 在 Maven 项目中使用 TensorFlow
 
-To use TensorFlow with [Apache Maven](https://maven.apache.org),
-add the dependency to the project's `pom.xml` file:
+如果您的项目使用 [Apache Maven](https://maven.apache.org)，请将以下内容添加到项目的 `pom.xml` 以使用 TensorFlow Java API：
 
 ```xml
 <dependency>
@@ -36,10 +30,9 @@ add the dependency to the project's `pom.xml` file:
 </dependency>
 ```
 
-### GPU support
+### GPU 支持
 
-If your system has [GPU support](/docs/tensorflow/install/gpu), add the following TensorFlow
-dependencies to the project's `pom.xml` file:
+如果您的 Linux 系统搭载了 NVIDIA® GPU 且您的 TensorFlow Java 程序需要 GPU 加速，请将以下内容添加到项目的 `pom.xml`：
 
 ```xml
 <dependency>
@@ -54,10 +47,9 @@ dependencies to the project's `pom.xml` file:
 </dependency>
 ```
 
-### Example program
+### 示例程序 
 
-This example shows how to build an Apache Maven project with TensorFlow. First,
-add the TensorFlow dependency to the project's `pom.xml` file:
+首先在项目的 `pom.xml` 文件添加 TensorFlow 依赖：
 
 ```xml
 <project>
@@ -82,7 +74,7 @@ add the TensorFlow dependency to the project's `pom.xml` file:
 </project>
 ```
 
-Create the source file (`src/main/java/HelloTensorFlow.java`):
+创建源文件 （`src/main/java/HelloTensorFlow.java`）：
 
 ```java
 import org.tensorflow.Graph;
@@ -114,24 +106,23 @@ public class HelloTensorFlow {
 }
 ```
 
-Compile and execute:
+编译和执行：
 
     mvn -q compile exec:java  # Use -q to hide logging
 
-The command outputs: `Hello from <version>`
+输出： `Hello from <version>`
 
-Success: TensorFlow for Java is configured.
+成功！
 
 
-## TensorFlow with the JDK
+## 在 JDK 中使用 TensorFlow
 
 TensorFlow can be used with the JDK through the Java Native Interface (JNI).
 
-### Download
+### 下载
 
-1. Download the TensorFlow Jar Archive (JAR): [libtensorflow.jar](https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-1.11.0.jar)
-2. Download and extract the Java Native Interface (JNI) file for your operating
-system and processor support:
+1. 下载 JAR 文件： [libtensorflow.jar](https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-1.11.0.jar)
+2. 下载并解压匹配系统和处理器的 Java Native Interface (JNI) 文件：
 
 <table>
   <tr><th>JNI version</th><th>URL</th></tr>
@@ -160,23 +151,21 @@ system and processor support:
   </tr>
 </table>
 
-Note: On Windows, the native library (`tensorflow_jni.dll`) requires
-`msvcp140.dll` at runtime. See the [Windows build from source](/docs/tensorflow/install/source_windows)
-guide to install the [Visual C++ 2015 Redistributable](https://www.microsoft.com/en-us/download/details.aspx?id=48145).
+注意：在 Windows 中，本地库 （`tensorflow_jni.dll`）在运行时需要 `msvcp140.dll` 文件。 参见 [Windows 源码安装](/docs/tensorflow/install/source_windows)。
 
 
-### Compile
+### 编译
 
-Using the `HelloTensorFlow.java` file from the [previous example](#example),
-compile a program that uses TensorFlow. Make sure the `libtensorflow.jar` is
-accessible to your `classpath`:
+编译使用 TensorFlow 的 Java 程序时，下载的 `.jar` 必须是 `classpath` 的一部分。例如，您可以使用 `-cp` 编译标志将下载的 `.jar` 添加到 `classpath` 中，如下所示：
 
     javac -cp libtensorflow-1.11.0.jar HelloTensorFlow.java
 
-### Run
+### 执行
 
-To execute a TensorFlow Java program, the JVM must access `libtensorflow.jar` and
-the extracted JNI library.
+要运行依赖 TensorFlow 的 Java 程序，请确保 JVM 能访问以下两个文件：
+
+- 下载的 `.jar` 文件
+- 提取的 JNI 库
 
 ### Linux / mac OS
 
@@ -185,13 +174,11 @@ the extracted JNI library.
 ### Windows
     java -cp libtensorflow-1.11.0.jar;. -Djava.library.path=jni HelloTensorFlow
 
-The command outputs: `Hello from <version>`
+输出： `Hello from <version>`
 
-Success: TensorFlow for Java is configured.
+成功！
 
 
-## Build from source
+## 源码安装
 
-TensorFlow is open source. Read
-[the instructions](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/java/README)
-to build TensorFlow's Java and native libraries from source code.
+TensorFlow 是开源的，请参考[此说明](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/java/README)进行源码安装。
