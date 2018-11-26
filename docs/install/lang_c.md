@@ -1,7 +1,6 @@
 # 安装 C 语言版本的 TensorFlow
 
-TensorFlow 提供了一个 C 语言的 API 来
-[绑定其他语言](/docs/tensorflow/extend/language_bindings)。这个 API 定义在
+TensorFlow 提供了一个 C 语言的 API 来[绑定其他语言](/docs/tensorflow/extend/language_bindings)。这个 API 定义在
 <a href="https://github.com/tensorflow/tensorflow/blob/master/tensorflow/c/c_api.h">`c_api.h`</a>里，是秉着简单性和一致性设计的，而非便利性。
 
 
